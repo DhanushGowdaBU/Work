@@ -44,6 +44,14 @@ interface ProjectConfig {
 // Helper functions
 // ==================================================
 
+function toKebabCase(value: string): string {
+  return value
+    .replace(/([a-z])([A-Z])/g, '$1-$2')
+    .replace(/[\s_]+/g, '-')
+    .toLowerCase();
+}
+
+
 function toPascalCase(value: string): string {
   return value
     .split('-')
@@ -57,955 +65,28 @@ function toPascalCase(value: string): string {
 }
 
 
-function toKebabCase(value: string): string {
-  return value
-    .replace(/([a-z])([A-Z])/g, '$1-$2')
-    .replace(/[\s_]+/g, '-')
-    .toLowerCase();
-}
-
-
-function createFile(
-  filePath: string,
-  content: string
+function createDirectory(
+  directoryPath: string
 ): void {
-
   fs.mkdirSync(
-    path.dirname(filePath),
+    directoryPath,
     {
       recursive: true
     }
   );
+}
+
+
+function createFile(
+  filePath: string
+): void {
+  createDirectory(
+    path.dirname(filePath)
+  );
 
   fs.writeFileSync(
     filePath,
-    content
-  );
-}
-
-
-function validateComponentType(
-  type: string
-): void {
-
-  const supportedTypes = [
-    'grid',
-    'modal',
-    'standard',
-    'wrapper'
-  ];
-
-  if (!supportedTypes.includes(type)) {
-
-    throw new Error(
-      `Unsupported component type '${type}'.\n` +
-      `Supported types: ${supportedTypes.join(', ')}`
-    );
-  }
-}
-
-
-// ==================================================
-// Component generation
-// ==================================================
-
-function generateComponent(
-  component: {
-    name: string;
-    type: string;
-  },
-  componentsPath: string,
-  generateTests: boolean
-): void {
-
-  const componentName =
-    toKebabCase(component.name);
-
-  const className =
-    toPascalCase(componentName);
-
-  validateComponentType(
-    component.type
-  );
-
-  const componentPath =
-    path.join(
-      componentsPath,
-      componentName
-    );
-
-  console.log(
-    `Generating component: ${componentName} (${component.type})`
-  );
-
-
-  // ==================================================
-  // Component TypeScript
-  // ==================================================
-
-  createFile(
-    path.join(
-      componentPath,
-      `${componentName}.component.ts`
-    ),
-
-    `import { Component } from '@angular/core';
-
-@Component({
-  selector: 'app-${componentName}',
-  standalone: true,
-  templateUrl: './${componentName}.component.html',
-  styleUrl: './${componentName}.component.scss'
-})
-export class ${className}Component {
-}
-`
-  );
-
-
-  // ==================================================
-  // Component HTML
-  // ==================================================
-
-  createFile(
-    path.join(
-      componentPath,
-      `${componentName}.component.html`
-    ),
-
-    `<div class="${componentName}">
-  ${className} component
-</div>
-`
-  );
-
-
-  // ==================================================
-  // Component SCSS
-  // ==================================================
-
-  createFile(
-    path.join(
-      componentPath,
-      `${componentName}.component.scss`
-    ),
-
-    `.${componentName} {
-}
-`
-  );
-
-
-  // ==================================================
-  // Component test
-  // ==================================================
-
-  if (generateTests) {
-
-    createFile(
-      path.join(
-        componentPath,
-        `${componentName}.component.spec.ts`
-      ),
-
-      `import {
-  ComponentFixture,
-  TestBed
-} from '@angular/core/testing';
-
-import {
-  ${className}Component
-} from './${componentName}.component';
-
-
-describe('${className}Component', () => {
-
-  let component: ${className}Component;
-
-  let fixture:
-    ComponentFixture<${className}Component>;
-
-
-  beforeEach(async () => {
-
-    await TestBed.configureTestingModule({
-      imports: [
-        ${className}Component
-      ]
-    }).compileComponents();
-
-
-    fixture =
-      TestBed.createComponent(
-        ${className}Component
-      );
-
-
-    component =
-      fixture.componentInstance;
-
-
-    fixture.detectChanges();
-  });
-
-
-  it('should create', () => {
-
-    expect(component)
-      .toBeTruthy();
-
-  });
-
-});
-`
-    );
-  }
-
-
-  // ==================================================
-  // Grid-specific files
-  // ==================================================
-
-  if (component.type === 'grid') {
-
-    createFile(
-      path.join(
-        componentPath,
-        `${componentName}-view.service.ts`
-      ),
-
-      `import { Injectable } from '@angular/core';
-
-@Injectable({
-  providedIn: 'root'
-})
-export class ${className}ViewService {
-}
-`
-    );
-
-
-    if (generateTests) {
-
-      createFile(
-        path.join(
-          componentPath,
-          `${componentName}-view.service.spec.ts`
-        ),
-
-        `import {
-  ${className}ViewService
-} from './${componentName}-view.service';
-
-
-describe('${className}ViewService', () => {
-
-  it('should be created', () => {
-
-    const service =
-      new ${className}ViewService();
-
-    expect(service)
-      .toBeTruthy();
-
-  });
-
-});
-`
-      );
-    }
-
-
-    createFile(
-      path.join(
-        componentPath,
-        `${componentName}-data-source.service.ts`
-      ),
-
-      `import { Injectable } from '@angular/core';
-
-@Injectable({
-  providedIn: 'root'
-})
-export class ${className}DataSourceService {
-}
-`
-    );
-
-
-    if (generateTests) {
-
-      createFile(
-        path.join(
-          componentPath,
-          `${componentName}-data-source.service.spec.ts`
-        ),
-
-        `import {
-  ${className}DataSourceService
-} from './${componentName}-data-source.service';
-
-
-describe('${className}DataSourceService', () => {
-
-  it('should be created', () => {
-
-    const service =
-      new ${className}DataSourceService();
-
-    expect(service)
-      .toBeTruthy();
-
-  });
-
-});
-`
-      );
-    }
-  }
-
-
-  // ==================================================
-  // Wrapper-specific files
-  // ==================================================
-
-  if (component.type === 'wrapper') {
-
-    createFile(
-      path.join(
-        componentPath,
-        `${componentName}-view.service.ts`
-      ),
-
-      `import { Injectable } from '@angular/core';
-
-@Injectable({
-  providedIn: 'root'
-})
-export class ${className}ViewService {
-}
-`
-    );
-
-
-    if (generateTests) {
-
-      createFile(
-        path.join(
-          componentPath,
-          `${componentName}-view.service.spec.ts`
-        ),
-
-        `import {
-  ${className}ViewService
-} from './${componentName}-view.service';
-
-
-describe('${className}ViewService', () => {
-
-  it('should be created', () => {
-
-    const service =
-      new ${className}ViewService();
-
-    expect(service)
-      .toBeTruthy();
-
-  });
-
-});
-`
-      );
-    }
-  }
-
-
-  // ==================================================
-  // Modal-specific files
-  // ==================================================
-
-  if (component.type === 'modal') {
-
-    createFile(
-      path.join(
-        componentPath,
-        `${componentName}-view.service.ts`
-      ),
-
-      `import { Injectable } from '@angular/core';
-
-@Injectable({
-  providedIn: 'root'
-})
-export class ${className}ViewService {
-}
-`
-    );
-
-
-    if (generateTests) {
-
-      createFile(
-        path.join(
-          componentPath,
-          `${componentName}-view.service.spec.ts`
-        ),
-
-        `import {
-  ${className}ViewService
-} from './${componentName}-view.service';
-
-
-describe('${className}ViewService', () => {
-
-  it('should be created', () => {
-
-    const service =
-      new ${className}ViewService();
-
-    expect(service)
-      .toBeTruthy();
-
-  });
-
-});
-`
-      );
-    }
-  }
-}
-
-
-// ==================================================
-// Model generation
-// ==================================================
-
-function generateModel(
-  modelName: string,
-  modelsPath: string
-): void {
-
-  const normalizedName =
-    toKebabCase(modelName);
-
-  const className =
-    toPascalCase(normalizedName);
-
-
-  const modelPath =
-    path.join(
-      modelsPath,
-      `${normalizedName}.model.ts`
-    );
-
-
-  createFile(
-    modelPath,
-
-    `export interface ${className}Model {
-}
-`
-  );
-
-
-  console.log(
-    `Created model: ${normalizedName}.model.ts`
-  );
-}
-
-
-// ==================================================
-// Service generation
-// ==================================================
-
-function generateService(
-  serviceName: string,
-  servicesPath: string,
-  generateTests: boolean
-): void {
-
-  const normalizedName =
-    toKebabCase(serviceName);
-
-  const className =
-    toPascalCase(normalizedName);
-
-
-  const servicePath =
-    path.join(
-      servicesPath,
-      `${normalizedName}.service.ts`
-    );
-
-
-  createFile(
-    servicePath,
-
-    `import { Injectable } from '@angular/core';
-
-@Injectable({
-  providedIn: 'root'
-})
-export class ${className}Service {
-}
-`
-  );
-
-
-  console.log(
-    `Created service: ${normalizedName}.service.ts`
-  );
-
-
-  // ==================================================
-  // Service test
-  // ==================================================
-
-  if (generateTests) {
-
-    const serviceSpecPath =
-      path.join(
-        servicesPath,
-        `${normalizedName}.service.spec.ts`
-      );
-
-
-    createFile(
-      serviceSpecPath,
-
-      `import { ${className}Service } from './${normalizedName}.service';
-
-
-describe('${className}Service', () => {
-
-  let service: ${className}Service;
-
-
-  beforeEach(() => {
-
-    service =
-      new ${className}Service();
-
-  });
-
-
-  it('should be created', () => {
-
-    expect(service)
-      .toBeTruthy();
-
-  });
-
-});
-`
-    );
-
-
-    console.log(
-      `Created service test: ${normalizedName}.service.spec.ts`
-    );
-  }
-}
-
-
-// ==================================================
-// Store generation
-// ==================================================
-
-function generateStore(
-  projectName: string,
-  storePath: string,
-  generateTests: boolean
-): void {
-
-  const className =
-    toPascalCase(projectName);
-
-
-  // ==================================================
-  // State
-  // ==================================================
-
-  createFile(
-    path.join(
-      storePath,
-      `${projectName}.state.ts`
-    ),
-
-    `export interface ${className}State {
-  loading: boolean;
-  error: unknown;
-}
-
-
-export const initial${className}State: ${className}State = {
-  loading: false,
-  error: null
-};
-`
-  );
-
-
-  // ==================================================
-  // Actions
-  // ==================================================
-
-  createFile(
-    path.join(
-      storePath,
-      `${projectName}.actions.ts`
-    ),
-
-    `import { createAction, props } from '@ngrx/store';
-
-export const load${className} =
-  createAction(
-    '[${className}] Load'
-  );
-
-
-export const load${className}Success =
-  createAction(
-    '[${className}] Load Success',
-    props<{ data: unknown }>()
-  );
-
-
-export const load${className}Failure =
-  createAction(
-    '[${className}] Load Failure',
-    props<{ error: unknown }>()
-  );
-`
-  );
-
-
-  // ==================================================
-  // Reducer
-  // ==================================================
-
-  createFile(
-    path.join(
-      storePath,
-      `${projectName}.reducer.ts`
-    ),
-
-    `import {
-  createReducer,
-  on
-} from '@ngrx/store';
-
-import {
-  load${className},
-  load${className}Success,
-  load${className}Failure
-} from './${projectName}.actions';
-
-import {
-  ${className}State,
-  initial${className}State
-} from './${projectName}.state';
-
-
-export const ${projectName}Reducer =
-  createReducer(
-
-    initial${className}State,
-
-    on(
-      load${className},
-      state => ({
-        ...state,
-        loading: true,
-        error: null
-      })
-    ),
-
-    on(
-      load${className}Success,
-      state => ({
-        ...state,
-        loading: false,
-        error: null
-      })
-    ),
-
-    on(
-      load${className}Failure,
-      (state, { error }) => ({
-        ...state,
-        loading: false,
-        error
-      })
-    )
-
-  );
-`
-  );
-
-
-  // ==================================================
-  // Reducer test
-  // ==================================================
-
-  if (generateTests) {
-
-    createFile(
-      path.join(
-        storePath,
-        `${projectName}.reducer.spec.ts`
-      ),
-
-      `import {
-  ${projectName}Reducer
-} from './${projectName}.reducer';
-
-import {
-  initial${className}State
-} from './${projectName}.state';
-
-
-describe(
-  '${className}Reducer',
-  () => {
-
-    it(
-      'should return the initial state',
-      () => {
-
-        const state =
-          ${projectName}Reducer(
-            undefined,
-            { type: '@@init' }
-          );
-
-        expect(state)
-          .toEqual(
-            initial${className}State
-          );
-
-      }
-    );
-
-  }
-);
-`
-    );
-  }
-
-
-  // ==================================================
-  // Effects
-  // ==================================================
-
-  createFile(
-    path.join(
-      storePath,
-      `${projectName}.effects.ts`
-    ),
-
-    `import { Injectable } from '@angular/core';
-
-import {
-  Actions
-} from '@ngrx/effects';
-
-import {
-  ofType
-} from '@ngrx/effects';
-
-import {
-  map
-} from 'rxjs/operators';
-
-import {
-  load${className},
-  load${className}Success
-} from './${projectName}.actions';
-
-
-@Injectable()
-export class ${className}Effects {
-
-  load$ = this.actions$.pipe(
-
-    ofType(
-      load${className}
-    ),
-
-    map(() =>
-      load${className}Success({
-        data: null
-      })
-    )
-
-  );
-
-
-  constructor(
-    private readonly actions$: Actions
-  ) {
-  }
-
-}
-`
-  );
-
-
-  // ==================================================
-  // Effects test
-  // ==================================================
-
-  if (generateTests) {
-
-    createFile(
-      path.join(
-        storePath,
-        `${projectName}.effects.spec.ts`
-      ),
-
-      `import { TestBed } from '@angular/core/testing';
-
-import {
-  provideMockActions
-} from '@ngrx/effects/testing';
-
-import {
-  Observable,
-  of
-} from 'rxjs';
-
-import {
-  ${className}Effects
-} from './${projectName}.effects';
-
-import {
-  load${className},
-  load${className}Success
-} from './${projectName}.actions';
-
-
-describe(
-  '${className}Effects',
-  () => {
-
-    let effects:
-      ${className}Effects;
-
-    let actions$: Observable<unknown>;
-
-
-    beforeEach(() => {
-
-      TestBed.configureTestingModule({
-
-        providers: [
-
-          ${className}Effects,
-
-          provideMockActions(
-            () => actions$
-          )
-
-        ]
-
-      });
-
-
-      effects =
-        TestBed.inject(
-          ${className}Effects
-        );
-
-    });
-
-
-    it(
-      'should be created',
-      () => {
-
-        expect(effects)
-          .toBeTruthy();
-
-      }
-    );
-
-  }
-);
-`
-    );
-  }
-
-
-  // ==================================================
-  // Selectors
-  // ==================================================
-
-  createFile(
-    path.join(
-      storePath,
-      `${projectName}.selectors.ts`
-    ),
-
-    `import {
-  createFeatureSelector,
-  createSelector
-} from '@ngrx/store';
-
-import {
-  ${className}State
-} from './${projectName}.state';
-
-
-export const select${className}State =
-  createFeatureSelector<${className}State>(
-    '${projectName}'
-  );
-
-
-export const select${className}Loading =
-  createSelector(
-    select${className}State,
-    state => state.loading
-  );
-
-
-export const select${className}Error =
-  createSelector(
-    select${className}State,
-    state => state.error
-  );
-`
-  );
-
-
-  // ==================================================
-  // Store
-  // ==================================================
-
-  createFile(
-    path.join(
-      storePath,
-      `${projectName}.store.ts`
-    ),
-
-    `import {
-  Store
-} from '@ngrx/store';
-
-import {
-  ${className}State
-} from './${projectName}.state';
-
-
-export type ${className}Store =
-  Store<${className}State>;
-`
-  );
-
-
-  console.log(
-    `Created store for: ${projectName}`
+    ''
   );
 }
 
@@ -1014,25 +95,20 @@ export type ${className}Store =
 // Paths
 // ==================================================
 
-const repoRoot =
-  path.resolve(
-    __dirname,
-    '../..'
-  );
+const repoRoot = path.resolve(
+  __dirname,
+  '../..'
+);
 
+const configPath = path.join(
+  repoRoot,
+  'nyboss-project.yaml'
+);
 
-const configPath =
-  path.join(
-    repoRoot,
-    'nyboss-project.yaml'
-  );
-
-
-const projectsPath =
-  path.join(
-    repoRoot,
-    'projects'
-  );
+const projectsPath = path.join(
+  repoRoot,
+  'projects'
+);
 
 
 // ==================================================
@@ -1061,29 +137,24 @@ console.log();
 // ==================================================
 
 if (!fs.existsSync(configPath)) {
-
   throw new Error(
     `Configuration file not found:\n${configPath}`
   );
-
 }
 
 
 // ==================================================
-// 2. Read YAML
+// 2. Read YAML configuration
 // ==================================================
 
-const configText =
-  fs.readFileSync(
-    configPath,
-    'utf8'
-  );
+const configText = fs.readFileSync(
+  configPath,
+  'utf8'
+);
 
-
-const config =
-  parse(
-    configText
-  ) as ProjectConfig;
+const config = parse(
+  configText
+) as ProjectConfig;
 
 
 // ==================================================
@@ -1091,20 +162,16 @@ const config =
 // ==================================================
 
 if (!config.application) {
-
   throw new Error(
     'The "application" section is required in nyboss-project.yaml.'
   );
-
 }
 
 
 if (!config.application.name) {
-
   throw new Error(
     'application.name is required in nyboss-project.yaml.'
   );
-
 }
 
 
@@ -1117,7 +184,6 @@ const projectName =
 // ==================================================
 
 if (!/^[a-z0-9-]+$/.test(projectName)) {
-
   throw new Error(
     `Invalid project name '${projectName}'.\n\n` +
     'NYBOSS project names must contain only:\n' +
@@ -1129,17 +195,14 @@ if (!/^[a-z0-9-]+$/.test(projectName)) {
     '- fibo-client-contact\n' +
     '- pledge-dashboard'
   );
-
 }
 
 
 if (projectName !== projectName.toLowerCase()) {
-
   throw new Error(
     `Invalid project name '${projectName}'.\n` +
     'NYBOSS project names must be lowercase.'
   );
-
 }
 
 
@@ -1155,11 +218,9 @@ console.log();
 // ==================================================
 
 if (!fs.existsSync(projectsPath)) {
-
   throw new Error(
     `Projects directory not found:\n${projectsPath}`
   );
-
 }
 
 
@@ -1167,19 +228,16 @@ if (!fs.existsSync(projectsPath)) {
 // 6. Check existing project
 // ==================================================
 
-const projectPath =
-  path.join(
-    projectsPath,
-    projectName
-  );
+const projectPath = path.join(
+  projectsPath,
+  projectName
+);
 
 
 if (fs.existsSync(projectPath)) {
-
   throw new Error(
     `Project '${projectName}' already exists:\n${projectPath}`
   );
-
 }
 
 
@@ -1200,13 +258,11 @@ console.log(
 
 console.log();
 
-
 console.log(
   `Components: ${
     config.components?.length ?? 0
   }`
 );
-
 
 console.log(
   `Models: ${
@@ -1214,13 +270,11 @@ console.log(
   }`
 );
 
-
 console.log(
   `Services: ${
     config.services?.length ?? 0
   }`
 );
-
 
 console.log(
   `Store: ${
@@ -1230,7 +284,6 @@ console.log(
   }`
 );
 
-
 console.log(
   `Routing: ${
     config.routing?.enabled
@@ -1239,7 +292,6 @@ console.log(
   }`
 );
 
-
 console.log(
   `Guard: ${
     config.guard?.enabled
@@ -1247,7 +299,6 @@ console.log(
       : 'Disabled'
   }`
 );
-
 
 console.log(
   `Tests: ${
@@ -1261,7 +312,7 @@ console.log();
 
 
 // ==================================================
-// 8. Generate Angular application
+// 8. Generate Angular application shell
 // ==================================================
 
 console.log(
@@ -1269,7 +320,6 @@ console.log(
 );
 
 console.log();
-
 
 const angularCli =
   process.platform === 'win32'
@@ -1302,24 +352,19 @@ console.log(
 console.log();
 
 
-// ==================================================
-// 9. Execute Angular CLI
-// ==================================================
-
-const angularProcess =
-  spawnSync(
-    angularCli,
-    angularArgs,
-    {
-      cwd: repoRoot,
-      stdio: 'inherit',
-      shell: true
-    }
-  );
+const angularProcess = spawnSync(
+  angularCli,
+  angularArgs,
+  {
+    cwd: repoRoot,
+    stdio: 'inherit',
+    shell: true
+  }
+);
 
 
 // ==================================================
-// 10. Check Angular CLI process
+// 9. Check Angular CLI execution
 // ==================================================
 
 if (angularProcess.error) {
@@ -1355,7 +400,7 @@ if (angularProcess.status !== 0) {
 
 
 // ==================================================
-// 11. Verify generated project
+// 10. Verify Angular application
 // ==================================================
 
 if (!fs.existsSync(projectPath)) {
@@ -1363,16 +408,14 @@ if (!fs.existsSync(projectPath)) {
   throw new Error(
     `Angular CLI completed, but the expected project directory was not found:\n${projectPath}`
   );
-
 }
 
 
-const generatedAppPath =
-  path.join(
-    projectPath,
-    'src',
-    'app'
-  );
+const generatedAppPath = path.join(
+  projectPath,
+  'src',
+  'app'
+);
 
 
 if (!fs.existsSync(generatedAppPath)) {
@@ -1380,12 +423,11 @@ if (!fs.existsSync(generatedAppPath)) {
   throw new Error(
     `Angular CLI completed, but the expected Angular app directory was not found:\n${generatedAppPath}`
   );
-
 }
 
 
 // ==================================================
-// 12. Create NYBOSS application structure
+// 11. Create NYBOSS application folder
 // ==================================================
 
 console.log(
@@ -1395,82 +437,62 @@ console.log(
 console.log();
 
 
-const nybossAppPath =
-  path.join(
-    generatedAppPath,
-    projectName
-  );
-
-
-const componentsPath =
-  path.join(
-    nybossAppPath,
-    'components'
-  );
-
-
-const modelsPath =
-  path.join(
-    nybossAppPath,
-    'models'
-  );
-
-
-const servicesPath =
-  path.join(
-    nybossAppPath,
-    'services'
-  );
-
-
-const storePath =
-  path.join(
-    nybossAppPath,
-    'store'
-  );
-
-
-// Components
-
-fs.mkdirSync(
-  componentsPath,
-  {
-    recursive: true
-  }
+const nybossAppPath = path.join(
+  generatedAppPath,
+  projectName
 );
 
 
-// Models
-
-fs.mkdirSync(
-  modelsPath,
-  {
-    recursive: true
-  }
+const componentsPath = path.join(
+  nybossAppPath,
+  'components'
 );
 
 
-// Services
-
-fs.mkdirSync(
-  servicesPath,
-  {
-    recursive: true
-  }
+const modelsPath = path.join(
+  nybossAppPath,
+  'models'
 );
 
 
-// Store
+const servicesPath = path.join(
+  nybossAppPath,
+  'services'
+);
+
+
+const storePath = path.join(
+  nybossAppPath,
+  'store'
+);
+
+
+// ==================================================
+// 12. Create base folders
+// ==================================================
+
+createDirectory(
+  nybossAppPath
+);
+
+createDirectory(
+  componentsPath
+);
+
+createDirectory(
+  modelsPath
+);
+
+createDirectory(
+  servicesPath
+);
+
 
 if (config.store?.enabled) {
 
-  fs.mkdirSync(
-    storePath,
-    {
-      recursive: true
-    }
+  createDirectory(
+    storePath
   );
-
 }
 
 
@@ -1496,37 +518,21 @@ if (config.store?.enabled) {
   console.log(
     'Created: store/'
   );
-
 }
 
 console.log();
 
 
 // ==================================================
-// 13. Create application constants
+// 13. Create constants
 // ==================================================
 
-const applicationClassName =
-  toPascalCase(
-    projectName
-  );
-
-
-const constantsPath =
+createFile(
   path.join(
     nybossAppPath,
     `${projectName}.constants.ts`
-  );
-
-
-createFile(
-  constantsPath,
-
-  `export const ${applicationClassName}Constants = {
-};
-`
+  )
 );
-
 
 console.log(
   `Created: ${projectName}.constants.ts`
@@ -1534,33 +540,21 @@ console.log(
 
 
 // ==================================================
-// 14. Create routing
+// 14. Create routes
 // ==================================================
 
 if (config.routing?.enabled) {
 
-  const routesPath =
+  createFile(
     path.join(
       nybossAppPath,
       `${projectName}.routes.ts`
-    );
-
-
-  createFile(
-    routesPath,
-
-    `import { Routes } from '@angular/router';
-
-export const ${applicationClassName}Routes: Routes = [
-];
-`
+    )
   );
-
 
   console.log(
     `Created: ${projectName}.routes.ts`
   );
-
 }
 
 
@@ -1570,24 +564,12 @@ export const ${applicationClassName}Routes: Routes = [
 
 if (config.guard?.enabled) {
 
-  const guardPath =
+  createFile(
     path.join(
       nybossAppPath,
       `${projectName}.guard.ts`
-    );
-
-
-  createFile(
-    guardPath,
-
-    `import { CanActivateFn } from '@angular/router';
-
-export const ${applicationClassName}Guard: CanActivateFn = () => {
-  return true;
-};
-`
+    )
   );
-
 
   console.log(
     `Created: ${projectName}.guard.ts`
@@ -1596,42 +578,17 @@ export const ${applicationClassName}Guard: CanActivateFn = () => {
 
   if (config.tests?.enabled) {
 
-    const guardSpecPath =
+    createFile(
       path.join(
         nybossAppPath,
         `${projectName}.guard.spec.ts`
-      );
-
-
-    createFile(
-      guardSpecPath,
-
-      `import {
-  ${applicationClassName}Guard
-} from './${projectName}.guard';
-
-
-describe('${applicationClassName}Guard', () => {
-
-  it('should be defined', () => {
-
-    expect(
-      ${applicationClassName}Guard
-    ).toBeTruthy();
-
-  });
-
-});
-`
+      )
     );
-
 
     console.log(
       `Created: ${projectName}.guard.spec.ts`
     );
-
   }
-
 }
 
 
@@ -1639,146 +596,328 @@ console.log();
 
 
 // ==================================================
-// 16. Generate components
-// ==================================================
-
-if (config.components?.length) {
-
-  console.log(
-    'Generating components...'
-  );
-
-  console.log();
-
-
-  for (
-    const component
-    of config.components
-  ) {
-
-    generateComponent(
-      component,
-      componentsPath,
-      config.tests?.enabled ?? false
-    );
-
-  }
-
-
-  console.log();
-
-  console.log(
-    `Generated ${
-      config.components.length
-    } component(s).`
-  );
-
-  console.log();
-
-}
-
-
-// ==================================================
-// 17. Generate models
+// 16. Create model files
 // ==================================================
 
 if (config.models?.length) {
 
   console.log(
-    'Generating models...'
+    'Creating model files...'
   );
 
-  console.log();
+  for (const model of config.models) {
 
+    const modelName =
+      toKebabCase(model);
 
-  for (
-    const model
-    of config.models
-  ) {
+    const modelFilePath =
+      path.join(
+        modelsPath,
+        `${modelName}.model.ts`
+      );
 
-    generateModel(
-      model,
-      modelsPath
+    createFile(
+      modelFilePath
     );
 
+    console.log(
+      `Created: models/${modelName}.model.ts`
+    );
   }
 
-
   console.log();
-
-  console.log(
-    `Generated ${
-      config.models.length
-    } model(s).`
-  );
-
-  console.log();
-
 }
 
 
 // ==================================================
-// 18. Generate services
+// 17. Create service files
 // ==================================================
 
 if (config.services?.length) {
 
   console.log(
-    'Generating services...'
+    'Creating service files...'
   );
 
-  console.log();
+  for (const service of config.services) {
 
+    const serviceName =
+      toKebabCase(service);
 
-  for (
-    const service
-    of config.services
-  ) {
+    const serviceFilePath =
+      path.join(
+        servicesPath,
+        `${serviceName}.service.ts`
+      );
 
-    generateService(
-      service,
-      servicesPath,
-      config.tests?.enabled ?? false
+    createFile(
+      serviceFilePath
     );
 
+    console.log(
+      `Created: services/${serviceName}.service.ts`
+    );
+
+
+    if (config.tests?.enabled) {
+
+      const serviceSpecPath =
+        path.join(
+          servicesPath,
+          `${serviceName}.service.spec.ts`
+        );
+
+      createFile(
+        serviceSpecPath
+      );
+
+      console.log(
+        `Created: services/${serviceName}.service.spec.ts`
+      );
+    }
   }
 
-
   console.log();
-
-  console.log(
-    `Generated ${
-      config.services.length
-    } service(s).`
-  );
-
-  console.log();
-
 }
 
 
 // ==================================================
-// 19. Generate store
+// 18. Create component files
+// ==================================================
+
+if (config.components?.length) {
+
+  console.log(
+    'Creating component files...'
+  );
+
+  for (const component of config.components) {
+
+    const componentName =
+      toKebabCase(component.name);
+
+    const componentType =
+      component.type
+        .trim()
+        .toLowerCase();
+
+
+    const componentPath =
+      path.join(
+        componentsPath,
+        componentName
+      );
+
+
+    // ----------------------------------------------
+    // Component directory
+    // ----------------------------------------------
+
+    createDirectory(
+      componentPath
+    );
+
+
+    // ----------------------------------------------
+    // Component files
+    // ----------------------------------------------
+
+    createFile(
+      path.join(
+        componentPath,
+        `${componentName}.component.ts`
+      )
+    );
+
+
+    createFile(
+      path.join(
+        componentPath,
+        `${componentName}.component.html`
+      )
+    );
+
+
+    createFile(
+      path.join(
+        componentPath,
+        `${componentName}.component.scss`
+      )
+    );
+
+
+    if (config.tests?.enabled) {
+
+      createFile(
+        path.join(
+          componentPath,
+          `${componentName}.component.spec.ts`
+        )
+      );
+    }
+
+
+    // ----------------------------------------------
+    // Component-specific files
+    // ----------------------------------------------
+
+    if (
+      componentType === 'grid'
+    ) {
+
+      createFile(
+        path.join(
+          componentPath,
+          `${componentName}-data-source.service.ts`
+        )
+      );
+
+
+      if (config.tests?.enabled) {
+
+        createFile(
+          path.join(
+            componentPath,
+            `${componentName}-data-source.service.spec.ts`
+          )
+        );
+      }
+
+
+      createFile(
+        path.join(
+          componentPath,
+          `${componentName}-view.service.ts`
+        )
+      );
+
+
+      if (config.tests?.enabled) {
+
+        createFile(
+          path.join(
+            componentPath,
+            `${componentName}-view.service.spec.ts`
+          )
+        );
+      }
+    }
+
+
+    if (
+      componentType === 'modal' ||
+      componentType === 'wrapper'
+    ) {
+
+      createFile(
+        path.join(
+          componentPath,
+          `${componentName}-view.service.ts`
+        )
+      );
+
+
+      if (config.tests?.enabled) {
+
+        createFile(
+          path.join(
+            componentPath,
+            `${componentName}-view.service.spec.ts`
+          )
+        );
+      }
+    }
+
+
+    console.log(
+      `Created component: ${componentName} (${componentType})`
+    );
+  }
+
+  console.log();
+}
+
+
+// ==================================================
+// 19. Create store files
 // ==================================================
 
 if (config.store?.enabled) {
 
   console.log(
-    'Generating store...'
-  );
-
-  console.log();
-
-
-  generateStore(
-    projectName,
-    storePath,
-    config.tests?.enabled ?? false
+    'Creating store files...'
   );
 
 
-  console.log();
+  createFile(
+    path.join(
+      storePath,
+      `${projectName}.actions.ts`
+    )
+  );
 
+
+  createFile(
+    path.join(
+      storePath,
+      `${projectName}.effects.ts`
+    )
+  );
+
+
+  createFile(
+    path.join(
+      storePath,
+      `${projectName}.effects.spec.ts`
+    )
+  );
+
+
+  createFile(
+    path.join(
+      storePath,
+      `${projectName}.reducer.ts`
+    )
+  );
+
+
+  createFile(
+    path.join(
+      storePath,
+      `${projectName}.reducer.spec.ts`
+    )
+  );
+
+
+  createFile(
+    path.join(
+      storePath,
+      `${projectName}.selectors.ts`
+    )
+  );
+
+
+  createFile(
+    path.join(
+      storePath,
+      `${projectName}.state.ts`
+    )
+  );
+
+
+  createFile(
+    path.join(
+      storePath,
+      `${projectName}.store.ts`
+    )
+  );
+
+
+  console.log(
+    `Created store files for: ${projectName}`
+  );
+
+  console.log();
 }
 
 
@@ -1800,11 +939,9 @@ console.log(
 
 console.log();
 
-
 console.log(
   `Project : ${projectName}`
 );
-
 
 console.log(
   `Location: projects/${projectName}`
@@ -1812,23 +949,20 @@ console.log(
 
 console.log();
 
-
 console.log(
-  'Angular workspace configuration has been updated by Angular CLI.'
+  'Angular workspace configuration was updated by Angular CLI.'
 );
 
 console.log();
 
-
 console.log(
-  'NYBOSS application structure has been created.'
+  'NYBOSS folder and file structure has been created.'
 );
 
 console.log();
 
-
 console.log(
-  'Components, models, services and store have been generated according to the configuration.'
+  'Generated files are intentionally empty.'
 );
 
 console.log();
