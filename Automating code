@@ -505,6 +505,7 @@ createFile(
   )
 );
 
+
 console.log(
   `Created: ${projectName}.constants.ts`
 );
@@ -523,6 +524,7 @@ if (config.routing?.enabled) {
     )
   );
 
+
   console.log(
     `Created: ${projectName}.routes.ts`
   );
@@ -535,7 +537,17 @@ if (config.routing?.enabled) {
 
 if (config.guard?.enabled) {
 
-  const guardArgs = [
+  /*
+   * Angular CLI is used to generate the guard.
+   *
+   * IMPORTANT:
+   * Do not pass --type-separator here.
+   * The existing workspace schematic configuration
+   * causes Angular CLI 18.1.4 to reject that property.
+   */
+
+
+  const guardArgs: string[] = [
     'generate',
     'guard',
 
@@ -547,6 +559,16 @@ if (config.guard?.enabled) {
     '--functional'
   ];
 
+
+  /*
+   * --skip-tests is a boolean flag.
+   *
+   * Tests enabled:
+   *     do not pass --skip-tests
+   *
+   * Tests disabled:
+   *     pass --skip-tests
+   */
 
   if (!config.tests?.enabled) {
 
@@ -596,6 +618,11 @@ if (config.models?.length) {
       );
 
 
+    /*
+     * Models are NYBOSS-specific files.
+     * Create them empty.
+     */
+
     createFile(
       modelPath
     );
@@ -633,7 +660,13 @@ if (config.services?.length) {
       `${projectName}/services/${serviceName}`;
 
 
-    const serviceArgs = [
+    /*
+     * Services are generated using Angular CLI
+     * so that Angular creates the standard service
+     * boilerplate and test file.
+     */
+
+    const serviceArgs: string[] = [
       'generate',
       'service',
 
@@ -693,7 +726,13 @@ if (config.components?.length) {
       `${projectName}/components/${componentName}`;
 
 
-    const componentArgs = [
+    /*
+     * Components are generated using Angular CLI
+     * so Angular creates the standard component
+     * files and boilerplate.
+     */
+
+    const componentArgs: string[] = [
       'generate',
       'component',
 
@@ -859,7 +898,7 @@ if (config.components?.length) {
 
 
     // ----------------------------------------------
-    // Unknown
+    // Unknown type
     // ----------------------------------------------
 
     else {
@@ -888,6 +927,11 @@ if (config.store?.enabled) {
     'Creating store files...'
   );
 
+
+  /*
+   * Store files are NYBOSS-specific files.
+   * They are intentionally created empty.
+   */
 
   createFile(
     path.join(
@@ -1007,7 +1051,7 @@ console.log(
 );
 
 console.log(
-  'NYBOSS-specific files are currently empty.'
+  'NYBOSS-specific files are intentionally empty.'
 );
 
 console.log();
