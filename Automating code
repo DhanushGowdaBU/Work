@@ -52,19 +52,6 @@ function toKebabCase(value: string): string {
 }
 
 
-function toPascalCase(value: string): string {
-  return value
-    .split('-')
-    .filter(Boolean)
-    .map(
-      part =>
-        part.charAt(0).toUpperCase() +
-        part.slice(1)
-    )
-    .join('');
-}
-
-
 function createDirectory(
   directoryPath: string
 ): void {
@@ -88,6 +75,76 @@ function createFile(
     filePath,
     ''
   );
+}
+
+
+// ==================================================
+// Run Angular CLI command
+// ==================================================
+
+function runAngularCommand(
+  args: string[],
+  description: string
+): void {
+
+  const angularCli =
+    process.platform === 'win32'
+      ? 'ng.cmd'
+      : 'ng';
+
+  console.log();
+  console.log(
+    `${description}`
+  );
+
+  console.log(
+    `Running: ng ${args.join(' ')}`
+  );
+
+  console.log();
+
+
+  const processResult = spawnSync(
+    angularCli,
+    args,
+    {
+      cwd: repoRoot,
+      stdio: 'inherit',
+      shell: true
+    }
+  );
+
+
+  if (processResult.error) {
+
+    console.error();
+
+    console.error(
+      `Failed to execute Angular CLI for: ${description}`
+    );
+
+    console.error(
+      processResult.error
+    );
+
+    throw processResult.error;
+  }
+
+
+  if (processResult.status !== 0) {
+
+    console.error();
+
+    console.error(
+      `Angular CLI exited with code ${
+        processResult.status
+      }`
+    );
+
+    throw new Error(
+      `Angular CLI operation failed: ${description}`
+    );
+  }
 }
 
 
@@ -137,6 +194,7 @@ console.log();
 // ==================================================
 
 if (!fs.existsSync(configPath)) {
+
   throw new Error(
     `Configuration file not found:\n${configPath}`
   );
@@ -152,9 +210,8 @@ const configText = fs.readFileSync(
   'utf8'
 );
 
-const config = parse(
-  configText
-) as ProjectConfig;
+const config =
+  parse(configText) as ProjectConfig;
 
 
 // ==================================================
@@ -162,6 +219,7 @@ const config = parse(
 // ==================================================
 
 if (!config.application) {
+
   throw new Error(
     'The "application" section is required in nyboss-project.yaml.'
   );
@@ -169,6 +227,7 @@ if (!config.application) {
 
 
 if (!config.application.name) {
+
   throw new Error(
     'application.name is required in nyboss-project.yaml.'
   );
@@ -184,6 +243,7 @@ const projectName =
 // ==================================================
 
 if (!/^[a-z0-9-]+$/.test(projectName)) {
+
   throw new Error(
     `Invalid project name '${projectName}'.\n\n` +
     'NYBOSS project names must contain only:\n' +
@@ -199,6 +259,7 @@ if (!/^[a-z0-9-]+$/.test(projectName)) {
 
 
 if (projectName !== projectName.toLowerCase()) {
+
   throw new Error(
     `Invalid project name '${projectName}'.\n` +
     'NYBOSS project names must be lowercase.'
@@ -218,6 +279,7 @@ console.log();
 // ==================================================
 
 if (!fs.existsSync(projectsPath)) {
+
   throw new Error(
     `Projects directory not found:\n${projectsPath}`
   );
@@ -235,6 +297,7 @@ const projectPath = path.join(
 
 
 if (fs.existsSync(projectPath)) {
+
   throw new Error(
     `Project '${projectName}' already exists:\n${projectPath}`
   );
@@ -249,7 +312,7 @@ console.log();
 
 
 // ==================================================
-// 7. Display configuration
+// 7. Display requested configuration
 // ==================================================
 
 console.log(
@@ -258,11 +321,13 @@ console.log(
 
 console.log();
 
+
 console.log(
   `Components: ${
     config.components?.length ?? 0
   }`
 );
+
 
 console.log(
   `Models: ${
@@ -270,11 +335,13 @@ console.log(
   }`
 );
 
+
 console.log(
   `Services: ${
     config.services?.length ?? 0
   }`
 );
+
 
 console.log(
   `Store: ${
@@ -284,6 +351,7 @@ console.log(
   }`
 );
 
+
 console.log(
   `Routing: ${
     config.routing?.enabled
@@ -292,6 +360,7 @@ console.log(
   }`
 );
 
+
 console.log(
   `Guard: ${
     config.guard?.enabled
@@ -299,6 +368,7 @@ console.log(
       : 'Disabled'
   }`
 );
+
 
 console.log(
   `Tests: ${
@@ -312,95 +382,32 @@ console.log();
 
 
 // ==================================================
-// 8. Generate Angular application shell
+// 8. Generate base Angular application
 // ==================================================
 
-console.log(
+runAngularCommand(
+  [
+    'generate',
+    'application',
+    projectName,
+
+    '--style',
+    'scss',
+
+    '--routing',
+    'false',
+
+    '--skip-tests',
+    'false',
+
+    '--skip-install'
+  ],
   'Creating Angular application...'
 );
 
-console.log();
-
-const angularCli =
-  process.platform === 'win32'
-    ? 'ng.cmd'
-    : 'ng';
-
-
-const angularArgs = [
-  'generate',
-  'application',
-  projectName,
-
-  '--style',
-  'scss',
-
-  '--routing',
-  'false',
-
-  '--skip-tests',
-  'false',
-
-  '--skip-install'
-];
-
-
-console.log(
-  `Running: ng ${angularArgs.join(' ')}`
-);
-
-console.log();
-
-
-const angularProcess = spawnSync(
-  angularCli,
-  angularArgs,
-  {
-    cwd: repoRoot,
-    stdio: 'inherit',
-    shell: true
-  }
-);
-
 
 // ==================================================
-// 9. Check Angular CLI execution
-// ==================================================
-
-if (angularProcess.error) {
-
-  console.error();
-
-  console.error(
-    'Failed to start Angular CLI.'
-  );
-
-  console.error(
-    angularProcess.error
-  );
-
-  throw angularProcess.error;
-}
-
-
-if (angularProcess.status !== 0) {
-
-  console.error();
-
-  console.error(
-    `Angular CLI exited with code: ${
-      angularProcess.status
-    }`
-  );
-
-  throw new Error(
-    'Angular application generation failed.'
-  );
-}
-
-
-// ==================================================
-// 10. Verify Angular application
+// 9. Verify Angular application
 // ==================================================
 
 if (!fs.existsSync(projectPath)) {
@@ -427,15 +434,8 @@ if (!fs.existsSync(generatedAppPath)) {
 
 
 // ==================================================
-// 11. Create NYBOSS application folder
+// 10. Create NYBOSS application directory
 // ==================================================
-
-console.log(
-  'Creating NYBOSS application structure...'
-);
-
-console.log();
-
 
 const nybossAppPath = path.join(
   generatedAppPath,
@@ -467,10 +467,6 @@ const storePath = path.join(
 );
 
 
-// ==================================================
-// 12. Create base folders
-// ==================================================
-
 createDirectory(
   nybossAppPath
 );
@@ -496,35 +492,8 @@ if (config.store?.enabled) {
 }
 
 
-console.log(
-  `Created: src/app/${projectName}/`
-);
-
-console.log(
-  'Created: components/'
-);
-
-console.log(
-  'Created: models/'
-);
-
-console.log(
-  'Created: services/'
-);
-
-
-if (config.store?.enabled) {
-
-  console.log(
-    'Created: store/'
-  );
-}
-
-console.log();
-
-
 // ==================================================
-// 13. Create constants
+// 11. Create constants file
 // ==================================================
 
 createFile(
@@ -540,7 +509,7 @@ console.log(
 
 
 // ==================================================
-// 14. Create routes
+// 12. Create routing file
 // ==================================================
 
 if (config.routing?.enabled) {
@@ -559,142 +528,219 @@ if (config.routing?.enabled) {
 
 
 // ==================================================
-// 15. Create guard
+// 13. Create guard using Angular CLI
 // ==================================================
 
 if (config.guard?.enabled) {
 
-  createFile(
+  const guardPath =
+    `${projectName}/${projectName}`;
+
+  const guardArgs = [
+    'generate',
+    'guard',
+    guardPath,
+
+    '--functional',
+
+    '--skip-tests',
+    config.tests?.enabled
+      ? 'false'
+      : 'true'
+  ];
+
+
+  runAngularCommand(
+    guardArgs,
+    'Creating application guard...'
+  );
+
+
+  /*
+   * Angular CLI creates the guard using its normal
+   * generated content.
+   *
+   * We want the final NYBOSS naming convention:
+   *
+   * <project-name>.guard.ts
+   *
+   * Therefore we check the generated location and
+   * move/rename it into the NYBOSS application folder.
+   */
+
+  const generatedGuardPath =
+    path.join(
+      generatedAppPath,
+      `${projectName}.guard.ts`
+    );
+
+
+  const generatedGuardSpecPath =
+    path.join(
+      generatedAppPath,
+      `${projectName}.guard.spec.ts`
+    );
+
+
+  const targetGuardPath =
     path.join(
       nybossAppPath,
       `${projectName}.guard.ts`
-    )
-  );
-
-  console.log(
-    `Created: ${projectName}.guard.ts`
-  );
+    );
 
 
-  if (config.tests?.enabled) {
+  const targetGuardSpecPath =
+    path.join(
+      nybossAppPath,
+      `${projectName}.guard.spec.ts`
+    );
 
-    createFile(
-      path.join(
-        nybossAppPath,
-        `${projectName}.guard.spec.ts`
-      )
+
+  if (fs.existsSync(generatedGuardPath)) {
+
+    fs.renameSync(
+      generatedGuardPath,
+      targetGuardPath
     );
 
     console.log(
-      `Created: ${projectName}.guard.spec.ts`
+      `Moved: ${projectName}.guard.ts`
+    );
+  }
+
+
+  if (
+    config.tests?.enabled &&
+    fs.existsSync(generatedGuardSpecPath)
+  ) {
+
+    fs.renameSync(
+      generatedGuardSpecPath,
+      targetGuardSpecPath
+    );
+
+    console.log(
+      `Moved: ${projectName}.guard.spec.ts`
     );
   }
 }
 
 
-console.log();
-
-
 // ==================================================
-// 16. Create model files
+// 14. Generate models
 // ==================================================
 
 if (config.models?.length) {
+
+  console.log();
 
   console.log(
     'Creating model files...'
   );
 
-  for (const model of config.models) {
+
+  for (
+    const model of config.models
+  ) {
 
     const modelName =
       toKebabCase(model);
 
-    const modelFilePath =
+
+    /*
+     * Models are not Angular CLI entities.
+     * Therefore we create the file itself.
+     *
+     * Content is intentionally empty.
+     */
+
+    const modelPath =
       path.join(
         modelsPath,
         `${modelName}.model.ts`
       );
 
+
     createFile(
-      modelFilePath
+      modelPath
     );
+
 
     console.log(
       `Created: models/${modelName}.model.ts`
     );
   }
-
-  console.log();
 }
 
 
 // ==================================================
-// 17. Create service files
+// 15. Generate services using Angular CLI
 // ==================================================
 
 if (config.services?.length) {
 
+  console.log();
+
   console.log(
-    'Creating service files...'
+    'Creating services...'
   );
 
-  for (const service of config.services) {
+
+  for (
+    const service of config.services
+  ) {
 
     const serviceName =
       toKebabCase(service);
 
-    const serviceFilePath =
-      path.join(
-        servicesPath,
-        `${serviceName}.service.ts`
-      );
 
-    createFile(
-      serviceFilePath
-    );
-
-    console.log(
-      `Created: services/${serviceName}.service.ts`
-    );
+    const serviceTarget =
+      `${projectName}/services/${serviceName}`;
 
 
-    if (config.tests?.enabled) {
+    const serviceArgs = [
+      'generate',
+      'service',
+      serviceTarget
+    ];
 
-      const serviceSpecPath =
-        path.join(
-          servicesPath,
-          `${serviceName}.service.spec.ts`
-        );
 
-      createFile(
-        serviceSpecPath
-      );
+    if (!config.tests?.enabled) {
 
-      console.log(
-        `Created: services/${serviceName}.service.spec.ts`
+      serviceArgs.push(
+        '--skip-tests'
       );
     }
-  }
 
-  console.log();
+
+    runAngularCommand(
+      serviceArgs,
+      `Creating service: ${serviceName}`
+    );
+  }
 }
 
 
 // ==================================================
-// 18. Create component files
+// 16. Generate components using Angular CLI
 // ==================================================
 
 if (config.components?.length) {
 
+  console.log();
+
   console.log(
-    'Creating component files...'
+    'Creating components...'
   );
 
-  for (const component of config.components) {
+
+  for (
+    const component of config.components
+  ) {
 
     const componentName =
       toKebabCase(component.name);
+
 
     const componentType =
       component.type
@@ -702,74 +748,50 @@ if (config.components?.length) {
         .toLowerCase();
 
 
-    const componentPath =
-      path.join(
-        componentsPath,
-        componentName
-      );
+    const componentTarget =
+      `${projectName}/components/${componentName}`;
 
 
-    // ----------------------------------------------
-    // Component directory
-    // ----------------------------------------------
+    const componentArgs = [
+      'generate',
+      'component',
+      componentTarget,
 
-    createDirectory(
-      componentPath
-    );
-
-
-    // ----------------------------------------------
-    // Component files
-    // ----------------------------------------------
-
-    createFile(
-      path.join(
-        componentPath,
-        `${componentName}.component.ts`
-      )
-    );
+      '--style',
+      'scss'
+    ];
 
 
-    createFile(
-      path.join(
-        componentPath,
-        `${componentName}.component.html`
-      )
-    );
+    if (!config.tests?.enabled) {
 
-
-    createFile(
-      path.join(
-        componentPath,
-        `${componentName}.component.scss`
-      )
-    );
-
-
-    if (config.tests?.enabled) {
-
-      createFile(
-        path.join(
-          componentPath,
-          `${componentName}.component.spec.ts`
-        )
+      componentArgs.push(
+        '--skip-tests'
       );
     }
 
 
+    runAngularCommand(
+      componentArgs,
+      `Creating component: ${componentName}`
+    );
+
+
     // ----------------------------------------------
-    // Component-specific files
+    // Grid-specific files
     // ----------------------------------------------
 
-    if (
-      componentType === 'grid'
-    ) {
+    if (componentType === 'grid') {
+
+      const dataSourcePath =
+        path.join(
+          componentsPath,
+          componentName,
+          `${componentName}-data-source.service.ts`
+        );
+
 
       createFile(
-        path.join(
-          componentPath,
-          `${componentName}-data-source.service.ts`
-        )
+        dataSourcePath
       );
 
 
@@ -777,18 +799,24 @@ if (config.components?.length) {
 
         createFile(
           path.join(
-            componentPath,
+            componentsPath,
+            componentName,
             `${componentName}-data-source.service.spec.ts`
           )
         );
       }
 
 
-      createFile(
+      const viewServicePath =
         path.join(
-          componentPath,
+          componentsPath,
+          componentName,
           `${componentName}-view.service.ts`
-        )
+        );
+
+
+      createFile(
+        viewServicePath
       );
 
 
@@ -796,24 +824,36 @@ if (config.components?.length) {
 
         createFile(
           path.join(
-            componentPath,
+            componentsPath,
+            componentName,
             `${componentName}-view.service.spec.ts`
           )
         );
       }
+
+
+      console.log(
+        `Created grid-specific files for: ${componentName}`
+      );
     }
 
 
-    if (
-      componentType === 'modal' ||
-      componentType === 'wrapper'
-    ) {
+    // ----------------------------------------------
+    // Modal-specific files
+    // ----------------------------------------------
+
+    else if (componentType === 'modal') {
+
+      const viewServicePath =
+        path.join(
+          componentsPath,
+          componentName,
+          `${componentName}-view.service.ts`
+        );
+
 
       createFile(
-        path.join(
-          componentPath,
-          `${componentName}-view.service.ts`
-        )
+        viewServicePath
       );
 
 
@@ -821,33 +861,107 @@ if (config.components?.length) {
 
         createFile(
           path.join(
-            componentPath,
+            componentsPath,
+            componentName,
             `${componentName}-view.service.spec.ts`
           )
         );
       }
+
+
+      console.log(
+        `Created modal-specific files for: ${componentName}`
+      );
     }
 
 
-    console.log(
-      `Created component: ${componentName} (${componentType})`
-    );
+    // ----------------------------------------------
+    // Wrapper-specific files
+    // ----------------------------------------------
+
+    else if (componentType === 'wrapper') {
+
+      const viewServicePath =
+        path.join(
+          componentsPath,
+          componentName,
+          `${componentName}-view.service.ts`
+        );
+
+
+      createFile(
+        viewServicePath
+      );
+
+
+      if (config.tests?.enabled) {
+
+        createFile(
+          path.join(
+            componentsPath,
+            componentName,
+            `${componentName}-view.service.spec.ts`
+          )
+        );
+      }
+
+
+      console.log(
+        `Created wrapper-specific files for: ${componentName}`
+      );
+    }
+
+
+    // ----------------------------------------------
+    // Standard component
+    // ----------------------------------------------
+
+    else if (componentType === 'standard') {
+
+      console.log(
+        `Created standard component: ${componentName}`
+      );
+    }
+
+
+    // ----------------------------------------------
+    // Unknown component type
+    // ----------------------------------------------
+
+    else {
+
+      console.warn(
+        `Warning: Unknown component type '${component.type}' for '${componentName}'.`
+      );
+
+      console.warn(
+        'Angular component was created, but no NYBOSS-specific files were added.'
+      );
+    }
   }
-
-  console.log();
 }
 
 
 // ==================================================
-// 19. Create store files
+// 17. Generate store files
 // ==================================================
 
 if (config.store?.enabled) {
+
+  console.log();
 
   console.log(
     'Creating store files...'
   );
 
+
+  /*
+   * These are NYBOSS-specific store files.
+   * Angular CLI does not generate this complete
+   * store structure automatically.
+   *
+   * Files are currently created empty.
+   */
 
   createFile(
     path.join(
@@ -865,12 +979,15 @@ if (config.store?.enabled) {
   );
 
 
-  createFile(
-    path.join(
-      storePath,
-      `${projectName}.effects.spec.ts`
-    )
-  );
+  if (config.tests?.enabled) {
+
+    createFile(
+      path.join(
+        storePath,
+        `${projectName}.effects.spec.ts`
+      )
+    );
+  }
 
 
   createFile(
@@ -881,12 +998,15 @@ if (config.store?.enabled) {
   );
 
 
-  createFile(
-    path.join(
-      storePath,
-      `${projectName}.reducer.spec.ts`
-    )
-  );
+  if (config.tests?.enabled) {
+
+    createFile(
+      path.join(
+        storePath,
+        `${projectName}.reducer.spec.ts`
+      )
+    );
+  }
 
 
   createFile(
@@ -916,14 +1036,14 @@ if (config.store?.enabled) {
   console.log(
     `Created store files for: ${projectName}`
   );
-
-  console.log();
 }
 
 
 // ==================================================
-// 20. Generation summary
+// 18. Generation summary
 // ==================================================
+
+console.log();
 
 console.log(
   '======================================'
@@ -950,19 +1070,17 @@ console.log(
 console.log();
 
 console.log(
-  'Angular workspace configuration was updated by Angular CLI.'
+  'Angular CLI generated Angular-native files with boilerplate.'
+);
+
+console.log(
+  'NYBOSS-specific files were created according to the configuration.'
 );
 
 console.log();
 
 console.log(
-  'NYBOSS folder and file structure has been created.'
-);
-
-console.log();
-
-console.log(
-  'Generated files are intentionally empty.'
+  'Note: NYBOSS-specific files are currently empty.'
 );
 
 console.log();
