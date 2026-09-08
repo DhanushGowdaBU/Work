@@ -238,9 +238,6 @@ const angularArgs = [
   'application',
   projectName,
 
-  '--directory',
-  `projects/${projectName}`,
-
   '--style',
   'scss',
 
