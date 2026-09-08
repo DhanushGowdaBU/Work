@@ -61,6 +61,7 @@ const projectsPath = path.join(
 // Start
 // ==================================================
 
+console.log();
 console.log('======================================');
 console.log(' NYBOSS Angular Project Generator');
 console.log('======================================');
@@ -68,18 +69,7 @@ console.log();
 
 
 // ==================================================
-// Validate projects directory
-// ==================================================
-
-if (!fs.existsSync(projectsPath)) {
-  throw new Error(
-    `Projects directory not found:\n${projectsPath}`
-  );
-}
-
-
-// ==================================================
-// Read YAML configuration
+// 1. Check configuration file
 // ==================================================
 
 if (!fs.existsSync(configPath)) {
@@ -87,6 +77,11 @@ if (!fs.existsSync(configPath)) {
     `Configuration file not found:\n${configPath}`
   );
 }
+
+
+// ==================================================
+// 2. Read YAML
+// ==================================================
 
 const configText = fs.readFileSync(
   configPath,
@@ -99,7 +94,7 @@ const config = parse(
 
 
 // ==================================================
-// Validate application configuration
+// 3. Validate application
 // ==================================================
 
 if (!config.application) {
@@ -117,18 +112,6 @@ if (!config.application.name) {
 const projectName =
   config.application.name.trim();
 
-
-// ==================================================
-// Validate project name
-// ==================================================
-
-if (!/^[a-z0-9-]+$/.test(projectName)) {
-  throw new Error(
-    `Invalid project name '${projectName}'.\n` +
-    'Use lowercase letters, numbers and hyphens only.'
-  );
-}
-
 console.log(
   `Project name: ${projectName}`
 );
@@ -137,13 +120,42 @@ console.log();
 
 
 // ==================================================
-// Determine project path
+// 4. Validate project name
+// ==================================================
+
+if (!/^[a-z0-9-]+$/.test(projectName)) {
+  throw new Error(
+    `Invalid project name '${projectName}'.\n` +
+    'Project names can contain only lowercase letters, numbers and hyphens.'
+  );
+}
+
+
+// ==================================================
+// 5. Validate projects directory
+// ==================================================
+
+if (!fs.existsSync(projectsPath)) {
+  throw new Error(
+    `Projects directory not found:\n${projectsPath}`
+  );
+}
+
+
+// ==================================================
+// 6. Check if project already exists
 // ==================================================
 
 const projectPath = path.join(
   projectsPath,
   projectName
 );
+
+if (fs.existsSync(projectPath)) {
+  throw new Error(
+    `Project '${projectName}' already exists:\n${projectPath}`
+  );
+}
 
 console.log(
   `Project path: ${projectPath}`
@@ -153,18 +165,7 @@ console.log();
 
 
 // ==================================================
-// Check whether project already exists
-// ==================================================
-
-if (fs.existsSync(projectPath)) {
-  throw new Error(
-    `Project '${projectName}' already exists:\n${projectPath}`
-  );
-}
-
-
-// ==================================================
-// Show requested configuration
+// 7. Display requested configuration
 // ==================================================
 
 console.log('Requested configuration:');
@@ -190,25 +191,25 @@ console.log(
 
 console.log(
   `Store: ${
-    config.store?.enabled ? 'enabled' : 'disabled'
+    config.store?.enabled ? 'Enabled' : 'Disabled'
   }`
 );
 
 console.log(
   `Routing: ${
-    config.routing?.enabled ? 'enabled' : 'disabled'
+    config.routing?.enabled ? 'Enabled' : 'Disabled'
   }`
 );
 
 console.log(
   `Guard: ${
-    config.guard?.enabled ? 'enabled' : 'disabled'
+    config.guard?.enabled ? 'Enabled' : 'Disabled'
   }`
 );
 
 console.log(
   `Tests: ${
-    config.tests?.enabled ? 'enabled' : 'disabled'
+    config.tests?.enabled ? 'Enabled' : 'Disabled'
   }`
 );
 
@@ -216,8 +217,14 @@ console.log();
 
 
 // ==================================================
-// Determine Angular CLI command
+// 8. Generate Angular application
 // ==================================================
+
+console.log(
+  'Creating Angular application...'
+);
+
+console.log();
 
 const angularCli =
   process.platform === 'win32'
@@ -225,309 +232,11 @@ const angularCli =
     : 'ng';
 
 
-// ==================================================
 // Angular CLI arguments
-// ==================================================
-
 const angularArgs = [
   'generate',
   'application',
   projectName,
 
-  '--project-root',
+  '--directory',
   `projects/${projectName}`,
-
-  '--style',
-  'scss',
-
-  '--routing',
-  'false',
-
-  '--skip-tests',
-  'false',
-
-  '--skip-install'
-];
-
-
-// ==================================================
-// Display command
-// ==================================================
-
-console.log(
-  `Running: ng ${angularArgs.join(' ')}`
-);
-
-console.log();
-
-
-// ==================================================
-// Run Angular CLI
-// ==================================================
-
-const angularResult = spawnSync(
-  angularCli,
-  angularArgs,
-  {
-    cwd: repoRoot,
-
-    stdio: 'inherit',
-
-    shell: true
-  }
-);
-
-
-// ==================================================
-// Handle process startup error
-// ==================================================
-
-if (angularResult.error) {
-  console.error();
-
-  console.error(
-    'Failed to start Angular CLI.'
-  );
-
-  console.error(
-    angularResult.error
-  );
-
-  throw angularResult.error;
-}
-
-
-// ==================================================
-// Handle Angular CLI failure
-// ==================================================
-
-if (angularResult.status !== 0) {
-  console.error();
-
-  console.error(
-    `Angular CLI exited with code: ${angularResult.status}`
-  );
-
-  throw new Error(
-    'Angular application generation failed.'
-  );
-}
-
-
-// ==================================================
-// Verify generated project
-// ==================================================
-
-if (!fs.existsSync(projectPath)) {
-  throw new Error(
-    `Angular CLI completed, but the project directory was not found:\n${projectPath}`
-  );
-}
-
-
-// ==================================================
-// Success
-// ==================================================
-
-console.log();
-
-console.log('======================================');
-console.log(' Angular application created');
-console.log('======================================');
-
-console.log();
-
-console.log(
-  `Project: ${projectName}`
-);
-
-console.log(
-  `Location: projects/${projectName}`
-);
-
-console.log();
-
-console.log(
-  'Angular CLI has updated angular.json.'
-);
-
-console.log();
-
-console.log(
-  'NYBOSS-specific generation will be added next.'
-);
-
-console.log();// Check project path
-// --------------------------------------------------
-
-const projectPath = path.join(
-  repoRoot,
-  'projects',
-  projectName
-);
-
-if (fs.existsSync(projectPath)) {
-  throw new Error(
-    `Project '${projectName}' already exists:\n${projectPath}`
-  );
-}
-
-console.log(`Project path: ${projectPath}`);
-console.log();
-
-
-// --------------------------------------------------
-// Generate Angular application
-// --------------------------------------------------
-
-console.log('Creating Angular application...');
-console.log();
-
-const angularCli =
-  process.platform === 'win32'
-    ? 'ng.cmd'
-    : 'ng';
-
-const angularArgs = [
-  'generate',
-  'application',
-  projectName,
-
-  '--project-root',
-  `projects/${projectName}`,
-
-  '--style',
-  'scss',
-
-  '--routing',
-  'false',
-
-  '--skip-tests',
-  'false',
-
-  '--skip-install'
-];
-
-console.log(
-  `Running: ng ${angularArgs.join(' ')}`
-);
-
-console.log();
-
-
-const result = spawnSync(
-  angularCli,
-  angularArgs,
-  {
-    cwd: repoRoot,
-
-    stdio: 'inherit',
-
-    shell: true
-  }
-);
-
-
-// --------------------------------------------------
-// Check Angular result
-// --------------------------------------------------
-
-if (result.error) {
-  console.error();
-  console.error(
-    'Failed to start Angular CLI:'
-  );
-  console.error(result.error);
-
-  throw result.error;
-}
-
-if (result.status !== 0) {
-  console.error();
-  console.error(
-    `Angular CLI exited with code: ${result.status}`
-  );
-
-  throw new Error(
-    'Angular application generation failed.'
-  );
-}
-
-
-// --------------------------------------------------
-// Success
-// --------------------------------------------------
-
-console.log();
-console.log('======================================');
-console.log(' Angular application created');
-console.log('======================================');
-console.log();
-
-console.log(
-  `Project: ${projectName}`
-);
-
-console.log(
-  `Location: projects/${projectName}`
-);
-
-console.log();
-
-console.log(
-  'Angular CLI has updated angular.json.'
-);
-
-console.log();
-
-console.log(
-  'NYBOSS-specific generation will be added next.'
-);
-const result = spawnSync(
-  angularCli,
-  [
-    'generate',
-    'application',
-    projectName,
-    '--directory',
-    `projects/${projectName}`,
-    '--style',
-    'scss',
-    '--routing',
-    'false',
-    '--skip-tests',
-    'false'
-  ],
-  {
-    cwd: repoRoot,
-    stdio: 'inherit',
-    shell: false
-  }
-);
-
-if (result.status !== 0) {
-  throw new Error(
-    'Angular application generation failed.'
-  );
-}
-
-console.log();
-console.log('Angular application created successfully.');
-console.log();
-
-
-// --------------------------------------------------
-// 5. Final information
-// --------------------------------------------------
-
-console.log('======================================');
-console.log(' Generation completed');
-console.log('======================================');
-
-console.log(`Project: ${projectName}`);
-console.log(`Location: projects/${projectName}`);
-console.log();
-
-console.log(
-  'Next step: NYBOSS-specific files will be generated here.'
-);
