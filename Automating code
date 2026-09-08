@@ -34,8 +34,22 @@ interface ProjectConfig {
   };
 }
 
+
+// --------------------------------------------------
+// Paths
+// --------------------------------------------------
+
 const repoRoot = path.resolve(__dirname, '../..');
-const configPath = path.join(repoRoot, 'nyboss-project.yaml');
+
+const configPath = path.join(
+  repoRoot,
+  'nyboss-project.yaml'
+);
+
+
+// --------------------------------------------------
+// Start
+// --------------------------------------------------
 
 console.log('======================================');
 console.log(' NYBOSS Angular Project Generator');
@@ -44,30 +58,41 @@ console.log();
 
 
 // --------------------------------------------------
-// 1. Read configuration
+// Read YAML configuration
 // --------------------------------------------------
 
 if (!fs.existsSync(configPath)) {
-  throw new Error(`Configuration file not found: ${configPath}`);
-}
-
-const configText = fs.readFileSync(configPath, 'utf8');
-
-const config = parse(configText) as ProjectConfig;
-
-if (!config.application?.name) {
   throw new Error(
-    'Application name is required in nyboss-project.yaml'
+    `Configuration file not found: ${configPath}`
   );
 }
 
-const projectName = config.application.name.trim();
+const configText = fs.readFileSync(
+  configPath,
+  'utf8'
+);
+
+const config = parse(configText) as ProjectConfig;
+
+
+// --------------------------------------------------
+// Validate application
+// --------------------------------------------------
+
+if (!config.application?.name) {
+  throw new Error(
+    'application.name is required in nyboss-project.yaml'
+  );
+}
+
+const projectName =
+  config.application.name.trim();
 
 console.log(`Project name: ${projectName}`);
 
 
 // --------------------------------------------------
-// 2. Validate project name
+// Validate project name
 // --------------------------------------------------
 
 if (!/^[a-z0-9-]+$/.test(projectName)) {
@@ -79,14 +104,18 @@ if (!/^[a-z0-9-]+$/.test(projectName)) {
 
 
 // --------------------------------------------------
-// 3. Check whether project already exists
+// Check project path
 // --------------------------------------------------
 
-const projectPath = path.join(repoRoot, 'projects', projectName);
+const projectPath = path.join(
+  repoRoot,
+  'projects',
+  projectName
+);
 
 if (fs.existsSync(projectPath)) {
   throw new Error(
-    `Project '${projectName}' already exists at ${projectPath}`
+    `Project '${projectName}' already exists:\n${projectPath}`
   );
 }
 
@@ -95,16 +124,112 @@ console.log();
 
 
 // --------------------------------------------------
-// 4. Create Angular application
+// Generate Angular application
 // --------------------------------------------------
 
 console.log('Creating Angular application...');
 console.log();
 
-const angularCli = process.platform === 'win32'
-  ? 'ng.cmd'
-  : 'ng';
+const angularCli =
+  process.platform === 'win32'
+    ? 'ng.cmd'
+    : 'ng';
 
+const angularArgs = [
+  'generate',
+  'application',
+  projectName,
+
+  '--project-root',
+  `projects/${projectName}`,
+
+  '--style',
+  'scss',
+
+  '--routing',
+  'false',
+
+  '--skip-tests',
+  'false',
+
+  '--skip-install'
+];
+
+console.log(
+  `Running: ng ${angularArgs.join(' ')}`
+);
+
+console.log();
+
+
+const result = spawnSync(
+  angularCli,
+  angularArgs,
+  {
+    cwd: repoRoot,
+
+    stdio: 'inherit',
+
+    shell: true
+  }
+);
+
+
+// --------------------------------------------------
+// Check Angular result
+// --------------------------------------------------
+
+if (result.error) {
+  console.error();
+  console.error(
+    'Failed to start Angular CLI:'
+  );
+  console.error(result.error);
+
+  throw result.error;
+}
+
+if (result.status !== 0) {
+  console.error();
+  console.error(
+    `Angular CLI exited with code: ${result.status}`
+  );
+
+  throw new Error(
+    'Angular application generation failed.'
+  );
+}
+
+
+// --------------------------------------------------
+// Success
+// --------------------------------------------------
+
+console.log();
+console.log('======================================');
+console.log(' Angular application created');
+console.log('======================================');
+console.log();
+
+console.log(
+  `Project: ${projectName}`
+);
+
+console.log(
+  `Location: projects/${projectName}`
+);
+
+console.log();
+
+console.log(
+  'Angular CLI has updated angular.json.'
+);
+
+console.log();
+
+console.log(
+  'NYBOSS-specific generation will be added next.'
+);
 const result = spawnSync(
   angularCli,
   [
