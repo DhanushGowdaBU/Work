@@ -8,15 +8,21 @@ import { parse } from 'yaml';
 // Configuration types
 // ==================================================
 
+interface ComponentConfig {
+  name: string;
+  type: string;
+
+  // Optional NYBOSS-specific supporting files
+  viewService?: boolean;
+  dataSource?: boolean;
+}
+
 interface ProjectConfig {
   application: {
     name: string;
   };
 
-  components?: {
-    name: string;
-    type: string;
-  }[];
+  components?: ComponentConfig[];
 
   models?: string[];
 
@@ -113,6 +119,7 @@ function runAngularCommand(
     process.platform === 'win32'
       ? 'ng.cmd'
       : 'ng';
+
 
   console.log();
 
@@ -504,6 +511,7 @@ createFile(
   )
 );
 
+
 console.log(
   `Created: ${projectName}.constants.ts`
 );
@@ -522,6 +530,7 @@ if (config.routing?.enabled) {
     )
   );
 
+
   console.log(
     `Created: ${projectName}.routes.ts`
   );
@@ -535,12 +544,11 @@ if (config.routing?.enabled) {
 if (config.guard?.enabled) {
 
   /*
-   * Guard is created directly as a file.
+   * Guard is intentionally created as a file
+   * instead of using Angular CLI.
    *
-   * Angular CLI guard generation is intentionally
-   * not used because the existing workspace schematic
-   * configuration is incompatible with the installed
-   * Angular CLI version.
+   * This avoids the existing guard schematic
+   * configuration problem in the workspace.
    *
    * angular.json is not modified.
    */
@@ -645,14 +653,16 @@ if (config.services?.length) {
 
 
     /*
-     * Services are intentionally created directly
-     * instead of using Angular CLI.
+     * Service files are created directly instead
+     * of using Angular CLI.
      *
      * Reason:
-     * Angular CLI 18.1.4 is inheriting the workspace
-     * "type" schematic configuration and rejecting it.
+     * The workspace Angular CLI schematic currently
+     * rejects the existing "type" configuration with:
      *
-     * This keeps angular.json untouched.
+     * Data path must NOT have additional properties (type)
+     *
+     * This generator does not modify angular.json.
      */
 
     const servicePath =
@@ -672,9 +682,9 @@ if (config.services?.length) {
     );
 
 
-    // ----------------------------------------------
-    // Service test
-    // ----------------------------------------------
+    /*
+     * Create service spec only when tests are enabled.
+     */
 
     if (config.tests?.enabled) {
 
@@ -732,11 +742,9 @@ if (config.components?.length) {
 
 
     /*
-     * Components are generated using Angular CLI.
-     *
-     * Angular CLI is still used here because the
-     * component schematic works correctly in the
-     * current workspace.
+     * Components continue to use Angular CLI
+     * because Angular generates the standard
+     * component boilerplate.
      */
 
     const componentArgs: string[] = [
@@ -776,12 +784,66 @@ if (config.components?.length) {
 
 
     // ----------------------------------------------
-    // Grid
+    // View service
     // ----------------------------------------------
 
-    if (
-      componentType === 'grid'
-    ) {
+    /*
+     * View service is NOT automatically created.
+     *
+     * It is created only when:
+     *
+     * viewService: true
+     *
+     * is specified in the YAML configuration.
+     */
+
+    if (component.viewService === true) {
+
+      createFile(
+        path.join(
+          componentDirectory,
+          `${componentName}-view.service.ts`
+        )
+      );
+
+
+      console.log(
+        `Created: ${componentName}-view.service.ts`
+      );
+
+
+      if (config.tests?.enabled) {
+
+        createFile(
+          path.join(
+            componentDirectory,
+            `${componentName}-view.service.spec.ts`
+          )
+        );
+
+
+        console.log(
+          `Created: ${componentName}-view.service.spec.ts`
+        );
+      }
+    }
+
+
+    // ----------------------------------------------
+    // Data source service
+    // ----------------------------------------------
+
+    /*
+     * Data source service is NOT automatically created.
+     *
+     * It is created only when:
+     *
+     * dataSource: true
+     *
+     * is specified in the YAML configuration.
+     */
+
+    if (component.dataSource === true) {
 
       createFile(
         path.join(
@@ -791,11 +853,8 @@ if (config.components?.length) {
       );
 
 
-      createFile(
-        path.join(
-          componentDirectory,
-          `${componentName}-view.service.ts`
-        )
+      console.log(
+        `Created: ${componentName}-data-source.service.ts`
       );
 
 
@@ -809,115 +868,33 @@ if (config.components?.length) {
         );
 
 
-        createFile(
-          path.join(
-            componentDirectory,
-            `${componentName}-view.service.spec.ts`
-          )
+        console.log(
+          `Created: ${componentName}-data-source.service.spec.ts`
         );
       }
-
-
-      console.log(
-        `Created grid-specific files for: ${componentName}`
-      );
     }
 
 
     // ----------------------------------------------
-    // Modal
+    // Component type information
     // ----------------------------------------------
 
-    else if (
-      componentType === 'modal'
+    if (
+      componentType !== 'standard' &&
+      componentType !== 'grid' &&
+      componentType !== 'modal' &&
+      componentType !== 'wrapper'
     ) {
-
-      createFile(
-        path.join(
-          componentDirectory,
-          `${componentName}-view.service.ts`
-        )
-      );
-
-
-      if (config.tests?.enabled) {
-
-        createFile(
-          path.join(
-            componentDirectory,
-            `${componentName}-view.service.spec.ts`
-          )
-        );
-      }
-
-
-      console.log(
-        `Created modal-specific files for: ${componentName}`
-      );
-    }
-
-
-    // ----------------------------------------------
-    // Wrapper
-    // ----------------------------------------------
-
-    else if (
-      componentType === 'wrapper'
-    ) {
-
-      createFile(
-        path.join(
-          componentDirectory,
-          `${componentName}-view.service.ts`
-        )
-      );
-
-
-      if (config.tests?.enabled) {
-
-        createFile(
-          path.join(
-            componentDirectory,
-            `${componentName}-view.service.spec.ts`
-          )
-        );
-      }
-
-
-      console.log(
-        `Created wrapper-specific files for: ${componentName}`
-      );
-    }
-
-
-    // ----------------------------------------------
-    // Standard
-    // ----------------------------------------------
-
-    else if (
-      componentType === 'standard'
-    ) {
-
-      console.log(
-        `Created standard component: ${componentName}`
-      );
-    }
-
-
-    // ----------------------------------------------
-    // Unknown type
-    // ----------------------------------------------
-
-    else {
 
       console.warn(
         `Warning: Unknown component type '${component.type}' for '${componentName}'.`
       );
-
-      console.warn(
-        'Only the standard Angular component was generated.'
-      );
     }
+
+
+    console.log(
+      `Created component: ${componentName} (${componentType})`
+    );
   }
 }
 
@@ -1039,22 +1016,14 @@ console.log(
 console.log();
 
 console.log(
-  'Angular CLI generated the Angular application and components.'
+  'Angular CLI generated Angular-native files.'
 );
 
 console.log(
-  'NYBOSS-specific files were created directly.'
-);
-
-console.log(
-  'angular.json was not modified by the NYBOSS generator.'
+  'NYBOSS-specific folders and files were created.'
 );
 
 console.log();
-
-console.log(
-  'Angular-generated files contain standard Angular boilerplate.'
-);
 
 console.log(
   'NYBOSS-specific files are intentionally empty.'
