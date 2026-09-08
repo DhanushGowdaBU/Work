@@ -114,7 +114,6 @@ function runAngularCommand(
       ? 'ng.cmd'
       : 'ng';
 
-
   console.log();
 
   console.log(
@@ -505,7 +504,6 @@ createFile(
   )
 );
 
-
 console.log(
   `Created: ${projectName}.constants.ts`
 );
@@ -524,7 +522,6 @@ if (config.routing?.enabled) {
     )
   );
 
-
   console.log(
     `Created: ${projectName}.routes.ts`
   );
@@ -538,15 +535,14 @@ if (config.routing?.enabled) {
 if (config.guard?.enabled) {
 
   /*
-   * Guard is intentionally created as a file
-   * instead of using Angular CLI.
+   * Guard is created directly as a file.
    *
-   * Reason:
-   * The existing NYBOSS workspace contains a
-   * guard schematic configuration that is rejected
-   * by the installed Angular CLI version.
+   * Angular CLI guard generation is intentionally
+   * not used because the existing workspace schematic
+   * configuration is incompatible with the installed
+   * Angular CLI version.
    *
-   * This generator must not modify angular.json.
+   * angular.json is not modified.
    */
 
   const guardPath =
@@ -565,10 +561,6 @@ if (config.guard?.enabled) {
     `Created: ${projectName}.guard.ts`
   );
 
-
-  // ------------------------------------------------
-  // Guard test
-  // ------------------------------------------------
 
   if (config.tests?.enabled) {
 
@@ -640,7 +632,7 @@ if (config.services?.length) {
   console.log();
 
   console.log(
-    'Creating services...'
+    'Creating service files...'
   );
 
 
@@ -652,38 +644,56 @@ if (config.services?.length) {
       toKebabCase(service);
 
 
-    const serviceTarget =
-      `${projectName}/services/${serviceName}`;
-
-
     /*
-     * Angular CLI generates the service and,
-     * when enabled, its corresponding spec file.
+     * Services are intentionally created directly
+     * instead of using Angular CLI.
+     *
+     * Reason:
+     * Angular CLI 18.1.4 is inheriting the workspace
+     * "type" schematic configuration and rejecting it.
+     *
+     * This keeps angular.json untouched.
      */
 
-    const serviceArgs: string[] = [
-      'generate',
-      'service',
-
-      serviceTarget,
-
-      '--project',
-      projectName
-    ];
+    const servicePath =
+      path.join(
+        servicesPath,
+        `${serviceName}.service.ts`
+      );
 
 
-    if (!config.tests?.enabled) {
+    createFile(
+      servicePath
+    );
 
-      serviceArgs.push(
-        '--skip-tests'
+
+    console.log(
+      `Created: services/${serviceName}.service.ts`
+    );
+
+
+    // ----------------------------------------------
+    // Service test
+    // ----------------------------------------------
+
+    if (config.tests?.enabled) {
+
+      const serviceSpecPath =
+        path.join(
+          servicesPath,
+          `${serviceName}.service.spec.ts`
+        );
+
+
+      createFile(
+        serviceSpecPath
+      );
+
+
+      console.log(
+        `Created: services/${serviceName}.service.spec.ts`
       );
     }
-
-
-    runAngularCommand(
-      serviceArgs,
-      `Creating service: ${serviceName}`
-    );
   }
 }
 
@@ -722,8 +732,11 @@ if (config.components?.length) {
 
 
     /*
-     * Angular CLI creates the standard component
-     * files and boilerplate.
+     * Components are generated using Angular CLI.
+     *
+     * Angular CLI is still used here because the
+     * component schematic works correctly in the
+     * current workspace.
      */
 
     const componentArgs: string[] = [
@@ -1026,11 +1039,15 @@ console.log(
 console.log();
 
 console.log(
-  'Angular CLI generated Angular-native files.'
+  'Angular CLI generated the Angular application and components.'
 );
 
 console.log(
-  'NYBOSS-specific folders and files were created.'
+  'NYBOSS-specific files were created directly.'
+);
+
+console.log(
+  'angular.json was not modified by the NYBOSS generator.'
 );
 
 console.log();
