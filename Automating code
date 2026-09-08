@@ -41,10 +41,30 @@ interface ProjectConfig {
 
 
 // ==================================================
+// Helper functions
+// ==================================================
+
+function toPascalCase(value: string): string {
+  return value
+    .split('-')
+    .filter(Boolean)
+    .map(
+      part =>
+        part.charAt(0).toUpperCase() +
+        part.slice(1)
+    )
+    .join('');
+}
+
+
+// ==================================================
 // Paths
 // ==================================================
 
-const repoRoot = path.resolve(__dirname, '../..');
+const repoRoot = path.resolve(
+  __dirname,
+  '../..'
+);
 
 const configPath = path.join(
   repoRoot,
@@ -62,9 +82,19 @@ const projectsPath = path.join(
 // ==================================================
 
 console.log();
-console.log('======================================');
-console.log(' NYBOSS Angular Project Generator');
-console.log('======================================');
+
+console.log(
+  '======================================'
+);
+
+console.log(
+  ' NYBOSS Angular Project Generator'
+);
+
+console.log(
+  '======================================'
+);
+
 console.log();
 
 
@@ -80,7 +110,7 @@ if (!fs.existsSync(configPath)) {
 
 
 // ==================================================
-// 2. Read YAML
+// 2. Read YAML configuration
 // ==================================================
 
 const configText = fs.readFileSync(
@@ -94,23 +124,56 @@ const config = parse(
 
 
 // ==================================================
-// 3. Validate application
+// 3. Validate application section
 // ==================================================
 
 if (!config.application) {
   throw new Error(
-    'The "application" section is required in nyboss-project.yaml'
+    'The "application" section is required in nyboss-project.yaml.'
   );
 }
+
 
 if (!config.application.name) {
   throw new Error(
-    'application.name is required in nyboss-project.yaml'
+    'application.name is required in nyboss-project.yaml.'
   );
 }
 
+
 const projectName =
   config.application.name.trim();
+
+
+// ==================================================
+// 4. Validate project name
+// ==================================================
+
+if (!/^[a-z0-9-]+$/.test(projectName)) {
+  throw new Error(
+    `Invalid project name '${projectName}'.\n\n` +
+    'NYBOSS project names must contain only:\n' +
+    '- lowercase letters (a-z)\n' +
+    '- numbers (0-9)\n' +
+    '- hyphens (-)\n\n' +
+    'Example: instrument\n' +
+    'Example: fibo-client-contact\n' +
+    'Example: pledge-dashboard'
+  );
+}
+
+
+// ==================================================
+// 5. Explicit lowercase validation
+// ==================================================
+
+if (projectName !== projectName.toLowerCase()) {
+  throw new Error(
+    `Invalid project name '${projectName}'.\n` +
+    'NYBOSS project names must be lowercase.'
+  );
+}
+
 
 console.log(
   `Project name: ${projectName}`
@@ -120,19 +183,7 @@ console.log();
 
 
 // ==================================================
-// 4. Validate project name
-// ==================================================
-
-if (!/^[a-z0-9-]+$/.test(projectName)) {
-  throw new Error(
-    `Invalid project name '${projectName}'.\n` +
-    'Project names can contain only lowercase letters, numbers and hyphens.'
-  );
-}
-
-
-// ==================================================
-// 5. Validate projects directory
+// 6. Validate projects directory
 // ==================================================
 
 if (!fs.existsSync(projectsPath)) {
@@ -143,7 +194,7 @@ if (!fs.existsSync(projectsPath)) {
 
 
 // ==================================================
-// 6. Check if project already exists
+// 7. Check whether project already exists
 // ==================================================
 
 const projectPath = path.join(
@@ -151,11 +202,13 @@ const projectPath = path.join(
   projectName
 );
 
+
 if (fs.existsSync(projectPath)) {
   throw new Error(
     `Project '${projectName}' already exists:\n${projectPath}`
   );
 }
+
 
 console.log(
   `Project path: ${projectPath}`
@@ -165,11 +218,15 @@ console.log();
 
 
 // ==================================================
-// 7. Display requested configuration
+// 8. Display requested configuration
 // ==================================================
 
-console.log('Requested configuration:');
+console.log(
+  'Requested configuration:'
+);
+
 console.log();
+
 
 console.log(
   `Components: ${
@@ -177,11 +234,13 @@ console.log(
   }`
 );
 
+
 console.log(
   `Models: ${
     config.models?.length ?? 0
   }`
 );
+
 
 console.log(
   `Services: ${
@@ -189,27 +248,39 @@ console.log(
   }`
 );
 
+
 console.log(
   `Store: ${
-    config.store?.enabled ? 'Enabled' : 'Disabled'
+    config.store?.enabled
+      ? 'Enabled'
+      : 'Disabled'
   }`
 );
+
 
 console.log(
   `Routing: ${
-    config.routing?.enabled ? 'Enabled' : 'Disabled'
+    config.routing?.enabled
+      ? 'Enabled'
+      : 'Disabled'
   }`
 );
+
 
 console.log(
   `Guard: ${
-    config.guard?.enabled ? 'Enabled' : 'Disabled'
+    config.guard?.enabled
+      ? 'Enabled'
+      : 'Disabled'
   }`
 );
 
+
 console.log(
   `Tests: ${
-    config.tests?.enabled ? 'Enabled' : 'Disabled'
+    config.tests?.enabled
+      ? 'Enabled'
+      : 'Disabled'
   }`
 );
 
@@ -217,7 +288,7 @@ console.log();
 
 
 // ==================================================
-// 8. Generate Angular application
+// 9. Generate Angular application
 // ==================================================
 
 console.log(
@@ -226,13 +297,17 @@ console.log(
 
 console.log();
 
+
 const angularCli =
   process.platform === 'win32'
     ? 'ng.cmd'
     : 'ng';
 
 
+// ==================================================
 // Angular CLI arguments
+// ==================================================
+
 const angularArgs = [
   'generate',
   'application',
@@ -259,7 +334,7 @@ console.log();
 
 
 // ==================================================
-// 9. Execute Angular CLI
+// 10. Execute Angular CLI
 // ==================================================
 
 const angularProcess = spawnSync(
@@ -276,7 +351,7 @@ const angularProcess = spawnSync(
 
 
 // ==================================================
-// 10. Check Angular CLI execution
+// 11. Check Angular CLI process
 // ==================================================
 
 if (angularProcess.error) {
@@ -312,7 +387,7 @@ if (angularProcess.status !== 0) {
 
 
 // ==================================================
-// 11. Verify generated project
+// 12. Verify generated project
 // ==================================================
 
 if (!fs.existsSync(projectPath)) {
@@ -323,36 +398,304 @@ if (!fs.existsSync(projectPath)) {
 }
 
 
+const generatedAppPath = path.join(
+  projectPath,
+  'src',
+  'app'
+);
+
+
+if (!fs.existsSync(generatedAppPath)) {
+
+  throw new Error(
+    `Angular CLI completed, but the expected Angular app directory was not found:\n${generatedAppPath}`
+  );
+}
+
+
 // ==================================================
-// 12. Success
+// 13. Create NYBOSS application structure
 // ==================================================
+
+console.log(
+  'Creating NYBOSS application structure...'
+);
 
 console.log();
 
-console.log('======================================');
-console.log(' Angular application created');
-console.log('======================================');
+
+const nybossAppPath = path.join(
+  generatedAppPath,
+  projectName
+);
+
+
+const componentsPath = path.join(
+  nybossAppPath,
+  'components'
+);
+
+
+const modelsPath = path.join(
+  nybossAppPath,
+  'models'
+);
+
+
+const servicesPath = path.join(
+  nybossAppPath,
+  'services'
+);
+
+
+const storePath = path.join(
+  nybossAppPath,
+  'store'
+);
+
+
+// Create components directory
+
+fs.mkdirSync(
+  componentsPath,
+  {
+    recursive: true
+  }
+);
+
+
+// Create models directory
+
+fs.mkdirSync(
+  modelsPath,
+  {
+    recursive: true
+  }
+);
+
+
+// Create services directory
+
+fs.mkdirSync(
+  servicesPath,
+  {
+    recursive: true
+  }
+);
+
+
+// Create store only when enabled
+
+if (config.store?.enabled) {
+
+  fs.mkdirSync(
+    storePath,
+    {
+      recursive: true
+    }
+  );
+}
+
+
+console.log(
+  `Created: src/app/${projectName}/`
+);
+
+console.log(
+  'Created: components/'
+);
+
+console.log(
+  'Created: models/'
+);
+
+console.log(
+  'Created: services/'
+);
+
+
+if (config.store?.enabled) {
+
+  console.log(
+    'Created: store/'
+  );
+}
+
 
 console.log();
+
+
+// ==================================================
+// 14. Create application constants
+// ==================================================
+
+const applicationClassName =
+  toPascalCase(projectName);
+
+
+const constantsPath = path.join(
+  generatedAppPath,
+  `${projectName}.constants.ts`
+);
+
+
+fs.writeFileSync(
+  constantsPath,
+  `export const ${applicationClassName}Constants = {
+};
+`
+);
+
+
+console.log(
+  `Created: ${projectName}.constants.ts`
+);
+
+
+// ==================================================
+// 15. Create routing
+// ==================================================
+
+if (config.routing?.enabled) {
+
+  const routesPath = path.join(
+    generatedAppPath,
+    `${projectName}.routes.ts`
+  );
+
+
+  fs.writeFileSync(
+    routesPath,
+    `import { Routes } from '@angular/router';
+
+export const ${applicationClassName}Routes: Routes = [
+];
+`
+  );
+
+
+  console.log(
+    `Created: ${projectName}.routes.ts`
+  );
+}
+
+
+// ==================================================
+// 16. Create guard
+// ==================================================
+
+if (config.guard?.enabled) {
+
+  const guardPath = path.join(
+    generatedAppPath,
+    `${projectName}.guard.ts`
+  );
+
+
+  fs.writeFileSync(
+    guardPath,
+    `import { CanActivateFn } from '@angular/router';
+
+export const ${applicationClassName}Guard: CanActivateFn = () => {
+  return true;
+};
+`
+  );
+
+
+  console.log(
+    `Created: ${projectName}.guard.ts`
+  );
+
+
+  // ------------------------------------------------
+  // Guard test
+  // ------------------------------------------------
+
+  if (config.tests?.enabled) {
+
+    const guardSpecPath = path.join(
+      generatedAppPath,
+      `${projectName}.guard.spec.ts`
+    );
+
+
+    fs.writeFileSync(
+      guardSpecPath,
+      `import { ${applicationClassName}Guard } from './${projectName}.guard';
+
+describe('${applicationClassName}Guard', () => {
+
+  it('should be defined', () => {
+    expect(${applicationClassName}Guard).toBeTruthy();
+  });
+
+});
+`
+    );
+
+
+    console.log(
+      `Created: ${projectName}.guard.spec.ts`
+    );
+  }
+}
+
+
+console.log();
+
+
+// ==================================================
+// 17. Generation summary
+// ==================================================
+
+console.log(
+  '======================================'
+);
+
+console.log(
+  ' Generation completed'
+);
+
+console.log(
+  '======================================'
+);
+
+console.log();
+
 
 console.log(
   `Project : ${projectName}`
 );
 
+
 console.log(
   `Location: projects/${projectName}`
 );
 
-console.log();
-
-console.log(
-  'Angular CLI has updated the workspace configuration.'
-);
 
 console.log();
 
+
 console.log(
-  'NYBOSS-specific generation will be added next.'
+  'Angular workspace configuration has been updated by Angular CLI.'
 );
+
+
+console.log();
+
+
+console.log(
+  'NYBOSS application structure has been created.'
+);
+
+
+console.log();
+
+
+console.log(
+  'Next step: component, model, service and store generation.'
+);
+
 
 console.log();
