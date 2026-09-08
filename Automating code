@@ -124,18 +124,15 @@ function generateComponent(
   const className =
     toPascalCase(componentName);
 
-
   validateComponentType(
     component.type
   );
-
 
   const componentPath =
     path.join(
       componentsPath,
       componentName
     );
-
 
   console.log(
     `Generating component: ${componentName} (${component.type})`
@@ -476,6 +473,540 @@ describe('${className}ViewService', () => {
       );
     }
   }
+}
+
+
+// ==================================================
+// Model generation
+// ==================================================
+
+function generateModel(
+  modelName: string,
+  modelsPath: string
+): void {
+
+  const normalizedName =
+    toKebabCase(modelName);
+
+  const className =
+    toPascalCase(normalizedName);
+
+
+  const modelPath =
+    path.join(
+      modelsPath,
+      `${normalizedName}.model.ts`
+    );
+
+
+  createFile(
+    modelPath,
+
+    `export interface ${className}Model {
+}
+`
+  );
+
+
+  console.log(
+    `Created model: ${normalizedName}.model.ts`
+  );
+}
+
+
+// ==================================================
+// Service generation
+// ==================================================
+
+function generateService(
+  serviceName: string,
+  servicesPath: string,
+  generateTests: boolean
+): void {
+
+  const normalizedName =
+    toKebabCase(serviceName);
+
+  const className =
+    toPascalCase(normalizedName);
+
+
+  const servicePath =
+    path.join(
+      servicesPath,
+      `${normalizedName}.service.ts`
+    );
+
+
+  createFile(
+    servicePath,
+
+    `import { Injectable } from '@angular/core';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class ${className}Service {
+}
+`
+  );
+
+
+  console.log(
+    `Created service: ${normalizedName}.service.ts`
+  );
+
+
+  // ==================================================
+  // Service test
+  // ==================================================
+
+  if (generateTests) {
+
+    const serviceSpecPath =
+      path.join(
+        servicesPath,
+        `${normalizedName}.service.spec.ts`
+      );
+
+
+    createFile(
+      serviceSpecPath,
+
+      `import { ${className}Service } from './${normalizedName}.service';
+
+
+describe('${className}Service', () => {
+
+  let service: ${className}Service;
+
+
+  beforeEach(() => {
+
+    service =
+      new ${className}Service();
+
+  });
+
+
+  it('should be created', () => {
+
+    expect(service)
+      .toBeTruthy();
+
+  });
+
+});
+`
+    );
+
+
+    console.log(
+      `Created service test: ${normalizedName}.service.spec.ts`
+    );
+  }
+}
+
+
+// ==================================================
+// Store generation
+// ==================================================
+
+function generateStore(
+  projectName: string,
+  storePath: string,
+  generateTests: boolean
+): void {
+
+  const className =
+    toPascalCase(projectName);
+
+
+  // ==================================================
+  // State
+  // ==================================================
+
+  createFile(
+    path.join(
+      storePath,
+      `${projectName}.state.ts`
+    ),
+
+    `export interface ${className}State {
+  loading: boolean;
+  error: unknown;
+}
+
+
+export const initial${className}State: ${className}State = {
+  loading: false,
+  error: null
+};
+`
+  );
+
+
+  // ==================================================
+  // Actions
+  // ==================================================
+
+  createFile(
+    path.join(
+      storePath,
+      `${projectName}.actions.ts`
+    ),
+
+    `import { createAction, props } from '@ngrx/store';
+
+export const load${className} =
+  createAction(
+    '[${className}] Load'
+  );
+
+
+export const load${className}Success =
+  createAction(
+    '[${className}] Load Success',
+    props<{ data: unknown }>()
+  );
+
+
+export const load${className}Failure =
+  createAction(
+    '[${className}] Load Failure',
+    props<{ error: unknown }>()
+  );
+`
+  );
+
+
+  // ==================================================
+  // Reducer
+  // ==================================================
+
+  createFile(
+    path.join(
+      storePath,
+      `${projectName}.reducer.ts`
+    ),
+
+    `import {
+  createReducer,
+  on
+} from '@ngrx/store';
+
+import {
+  load${className},
+  load${className}Success,
+  load${className}Failure
+} from './${projectName}.actions';
+
+import {
+  ${className}State,
+  initial${className}State
+} from './${projectName}.state';
+
+
+export const ${projectName}Reducer =
+  createReducer(
+
+    initial${className}State,
+
+    on(
+      load${className},
+      state => ({
+        ...state,
+        loading: true,
+        error: null
+      })
+    ),
+
+    on(
+      load${className}Success,
+      state => ({
+        ...state,
+        loading: false,
+        error: null
+      })
+    ),
+
+    on(
+      load${className}Failure,
+      (state, { error }) => ({
+        ...state,
+        loading: false,
+        error
+      })
+    )
+
+  );
+`
+  );
+
+
+  // ==================================================
+  // Reducer test
+  // ==================================================
+
+  if (generateTests) {
+
+    createFile(
+      path.join(
+        storePath,
+        `${projectName}.reducer.spec.ts`
+      ),
+
+      `import {
+  ${projectName}Reducer
+} from './${projectName}.reducer';
+
+import {
+  initial${className}State
+} from './${projectName}.state';
+
+
+describe(
+  '${className}Reducer',
+  () => {
+
+    it(
+      'should return the initial state',
+      () => {
+
+        const state =
+          ${projectName}Reducer(
+            undefined,
+            { type: '@@init' }
+          );
+
+        expect(state)
+          .toEqual(
+            initial${className}State
+          );
+
+      }
+    );
+
+  }
+);
+`
+    );
+  }
+
+
+  // ==================================================
+  // Effects
+  // ==================================================
+
+  createFile(
+    path.join(
+      storePath,
+      `${projectName}.effects.ts`
+    ),
+
+    `import { Injectable } from '@angular/core';
+
+import {
+  Actions
+} from '@ngrx/effects';
+
+import {
+  ofType
+} from '@ngrx/effects';
+
+import {
+  map
+} from 'rxjs/operators';
+
+import {
+  load${className},
+  load${className}Success
+} from './${projectName}.actions';
+
+
+@Injectable()
+export class ${className}Effects {
+
+  load$ = this.actions$.pipe(
+
+    ofType(
+      load${className}
+    ),
+
+    map(() =>
+      load${className}Success({
+        data: null
+      })
+    )
+
+  );
+
+
+  constructor(
+    private readonly actions$: Actions
+  ) {
+  }
+
+}
+`
+  );
+
+
+  // ==================================================
+  // Effects test
+  // ==================================================
+
+  if (generateTests) {
+
+    createFile(
+      path.join(
+        storePath,
+        `${projectName}.effects.spec.ts`
+      ),
+
+      `import { TestBed } from '@angular/core/testing';
+
+import {
+  provideMockActions
+} from '@ngrx/effects/testing';
+
+import {
+  Observable,
+  of
+} from 'rxjs';
+
+import {
+  ${className}Effects
+} from './${projectName}.effects';
+
+import {
+  load${className},
+  load${className}Success
+} from './${projectName}.actions';
+
+
+describe(
+  '${className}Effects',
+  () => {
+
+    let effects:
+      ${className}Effects;
+
+    let actions$: Observable<unknown>;
+
+
+    beforeEach(() => {
+
+      TestBed.configureTestingModule({
+
+        providers: [
+
+          ${className}Effects,
+
+          provideMockActions(
+            () => actions$
+          )
+
+        ]
+
+      });
+
+
+      effects =
+        TestBed.inject(
+          ${className}Effects
+        );
+
+    });
+
+
+    it(
+      'should be created',
+      () => {
+
+        expect(effects)
+          .toBeTruthy();
+
+      }
+    );
+
+  }
+);
+`
+    );
+  }
+
+
+  // ==================================================
+  // Selectors
+  // ==================================================
+
+  createFile(
+    path.join(
+      storePath,
+      `${projectName}.selectors.ts`
+    ),
+
+    `import {
+  createFeatureSelector,
+  createSelector
+} from '@ngrx/store';
+
+import {
+  ${className}State
+} from './${projectName}.state';
+
+
+export const select${className}State =
+  createFeatureSelector<${className}State>(
+    '${projectName}'
+  );
+
+
+export const select${className}Loading =
+  createSelector(
+    select${className}State,
+    state => state.loading
+  );
+
+
+export const select${className}Error =
+  createSelector(
+    select${className}State,
+    state => state.error
+  );
+`
+  );
+
+
+  // ==================================================
+  // Store
+  // ==================================================
+
+  createFile(
+    path.join(
+      storePath,
+      `${projectName}.store.ts`
+    ),
+
+    `import {
+  Store
+} from '@ngrx/store';
+
+import {
+  ${className}State
+} from './${projectName}.state';
+
+
+export type ${className}Store =
+  Store<${className}State>;
+`
+  );
+
+
+  console.log(
+    `Created store for: ${projectName}`
+  );
 }
 
 
@@ -1063,10 +1594,6 @@ export const ${applicationClassName}Guard: CanActivateFn = () => {
   );
 
 
-  // ==================================================
-  // Guard test
-  // ==================================================
-
   if (config.tests?.enabled) {
 
     const guardSpecPath =
@@ -1140,7 +1667,6 @@ if (config.components?.length) {
 
   console.log();
 
-
   console.log(
     `Generated ${
       config.components.length
@@ -1153,7 +1679,111 @@ if (config.components?.length) {
 
 
 // ==================================================
-// 17. Generation summary
+// 17. Generate models
+// ==================================================
+
+if (config.models?.length) {
+
+  console.log(
+    'Generating models...'
+  );
+
+  console.log();
+
+
+  for (
+    const model
+    of config.models
+  ) {
+
+    generateModel(
+      model,
+      modelsPath
+    );
+
+  }
+
+
+  console.log();
+
+  console.log(
+    `Generated ${
+      config.models.length
+    } model(s).`
+  );
+
+  console.log();
+
+}
+
+
+// ==================================================
+// 18. Generate services
+// ==================================================
+
+if (config.services?.length) {
+
+  console.log(
+    'Generating services...'
+  );
+
+  console.log();
+
+
+  for (
+    const service
+    of config.services
+  ) {
+
+    generateService(
+      service,
+      servicesPath,
+      config.tests?.enabled ?? false
+    );
+
+  }
+
+
+  console.log();
+
+  console.log(
+    `Generated ${
+      config.services.length
+    } service(s).`
+  );
+
+  console.log();
+
+}
+
+
+// ==================================================
+// 19. Generate store
+// ==================================================
+
+if (config.store?.enabled) {
+
+  console.log(
+    'Generating store...'
+  );
+
+  console.log();
+
+
+  generateStore(
+    projectName,
+    storePath,
+    config.tests?.enabled ?? false
+  );
+
+
+  console.log();
+
+}
+
+
+// ==================================================
+// 20. Generation summary
 // ==================================================
 
 console.log(
@@ -1198,7 +1828,7 @@ console.log();
 
 
 console.log(
-  'Components have been generated according to the configuration.'
+  'Components, models, services and store have been generated according to the configuration.'
 );
 
 console.log();
