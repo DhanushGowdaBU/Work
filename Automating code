@@ -538,55 +538,56 @@ if (config.routing?.enabled) {
 if (config.guard?.enabled) {
 
   /*
-   * Angular CLI is used to generate the guard.
+   * Guard is intentionally created as a file
+   * instead of using Angular CLI.
    *
-   * IMPORTANT:
-   * Do not pass --type-separator here.
-   * The existing workspace schematic configuration
-   * causes Angular CLI 18.1.4 to reject that property.
+   * Reason:
+   * The existing NYBOSS workspace contains a
+   * guard schematic configuration that is rejected
+   * by the installed Angular CLI version.
+   *
+   * This generator must not modify angular.json.
    */
 
-
-  const guardArgs: string[] = [
-    'generate',
-    'guard',
-
-    `${projectName}/${projectName}`,
-
-    '--project',
-    projectName,
-
-    '--functional'
-  ];
-
-
-  /*
-   * --skip-tests is a boolean flag.
-   *
-   * Tests enabled:
-   *     do not pass --skip-tests
-   *
-   * Tests disabled:
-   *     pass --skip-tests
-   */
-
-  if (!config.tests?.enabled) {
-
-    guardArgs.push(
-      '--skip-tests'
+  const guardPath =
+    path.join(
+      nybossAppPath,
+      `${projectName}.guard.ts`
     );
-  }
 
 
-  runAngularCommand(
-    guardArgs,
-    'Creating application guard...'
+  createFile(
+    guardPath
   );
 
 
   console.log(
-    `Guard generated for: ${projectName}`
+    `Created: ${projectName}.guard.ts`
   );
+
+
+  // ------------------------------------------------
+  // Guard test
+  // ------------------------------------------------
+
+  if (config.tests?.enabled) {
+
+    const guardSpecPath =
+      path.join(
+        nybossAppPath,
+        `${projectName}.guard.spec.ts`
+      );
+
+
+    createFile(
+      guardSpecPath
+    );
+
+
+    console.log(
+      `Created: ${projectName}.guard.spec.ts`
+    );
+  }
 }
 
 
@@ -617,11 +618,6 @@ if (config.models?.length) {
         `${modelName}.model.ts`
       );
 
-
-    /*
-     * Models are NYBOSS-specific files.
-     * Create them empty.
-     */
 
     createFile(
       modelPath
@@ -661,9 +657,8 @@ if (config.services?.length) {
 
 
     /*
-     * Services are generated using Angular CLI
-     * so that Angular creates the standard service
-     * boilerplate and test file.
+     * Angular CLI generates the service and,
+     * when enabled, its corresponding spec file.
      */
 
     const serviceArgs: string[] = [
@@ -727,8 +722,7 @@ if (config.components?.length) {
 
 
     /*
-     * Components are generated using Angular CLI
-     * so Angular creates the standard component
+     * Angular CLI creates the standard component
      * files and boilerplate.
      */
 
@@ -927,11 +921,6 @@ if (config.store?.enabled) {
     'Creating store files...'
   );
 
-
-  /*
-   * Store files are NYBOSS-specific files.
-   * They are intentionally created empty.
-   */
 
   createFile(
     path.join(
