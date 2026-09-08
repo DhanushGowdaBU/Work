@@ -240,3 +240,122 @@ const angularArgs = [
 
   '--directory',
   `projects/${projectName}`,
+
+  '--style',
+  'scss',
+
+  '--routing',
+  'false',
+
+  '--skip-tests',
+  'false',
+
+  '--skip-install'
+];
+
+
+console.log(
+  `Running: ng ${angularArgs.join(' ')}`
+);
+
+console.log();
+
+
+// ==================================================
+// 9. Execute Angular CLI
+// ==================================================
+
+const angularProcess = spawnSync(
+  angularCli,
+  angularArgs,
+  {
+    cwd: repoRoot,
+
+    stdio: 'inherit',
+
+    shell: true
+  }
+);
+
+
+// ==================================================
+// 10. Check Angular CLI execution
+// ==================================================
+
+if (angularProcess.error) {
+
+  console.error();
+
+  console.error(
+    'Failed to start Angular CLI.'
+  );
+
+  console.error(
+    angularProcess.error
+  );
+
+  throw angularProcess.error;
+}
+
+
+if (angularProcess.status !== 0) {
+
+  console.error();
+
+  console.error(
+    `Angular CLI exited with code: ${
+      angularProcess.status
+    }`
+  );
+
+  throw new Error(
+    'Angular application generation failed.'
+  );
+}
+
+
+// ==================================================
+// 11. Verify generated project
+// ==================================================
+
+if (!fs.existsSync(projectPath)) {
+
+  throw new Error(
+    `Angular CLI completed, but the expected project directory was not found:\n${projectPath}`
+  );
+}
+
+
+// ==================================================
+// 12. Success
+// ==================================================
+
+console.log();
+
+console.log('======================================');
+console.log(' Angular application created');
+console.log('======================================');
+
+console.log();
+
+console.log(
+  `Project : ${projectName}`
+);
+
+console.log(
+  `Location: projects/${projectName}`
+);
+
+console.log();
+
+console.log(
+  'Angular CLI has updated the workspace configuration.'
+);
+
+console.log();
+
+console.log(
+  'NYBOSS-specific generation will be added next.'
+);
+
+console.log();
