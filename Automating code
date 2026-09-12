@@ -1,152 +1,14 @@
-# NYBOSS .NET Project Creation
+# NYBOSS Server Project Structure
 
-## Phase 1
+The NYBOSS server repository contains multiple applications with different project compositions.
 
-The current implementation creates the project structure only.
+There is no single mandatory project structure for every application.
 
-The generator must not create application-level classes or business logic.
+Existing applications must therefore be treated as structural references.
 
-## Default Business Project
+## Known Example: ManualForecast
 
-When no specific project structure is provided, create:
-
-<ProjectName>/
-├── <ProjectName>.API/
-├── <ProjectName>.Common/
-├── <ProjectName>.Repository/
-└── <ProjectName>.Services/
-
-Example:
-
-Customer/
-├── Customer.API/
-├── Customer.Common/
-├── Customer.Repository/
-└── Customer.Services/
-
-## Project Types
-
-### API
-
-Use the ASP.NET Core Web API project template.
-
-Conceptually:
-
-dotnet new webapi
-
-The generated project must use the new project name:
-
-<ProjectName>.API
-
-### Common
-
-Use a .NET class library.
-
-Conceptually:
-
-dotnet new classlib
-
-Project name:
-
-<ProjectName>.Common
-
-### Repository
-
-Use a .NET class library.
-
-Conceptually:
-
-dotnet new classlib
-
-Project name:
-
-<ProjectName>.Repository
-
-### Services
-
-Use a .NET class library.
-
-Conceptually:
-
-dotnet new classlib
-
-Project name:
-
-<ProjectName>.Services
-
-## Project Creation Order
-
-For the default project, create projects in this order:
-
-1. Common
-2. Repository
-3. Services
-4. API
-
-This allows project references to be established after all required projects exist.
-
-## Basic Internal References
-
-For the default project, use only references between the newly created projects.
-
-Expected basic dependency direction:
-
-API
-→ Services
-
-Services
-→ Common
-→ Repository
-
-Repository
-→ Common
-
-Common
-→ no generated project dependency
-
-Do not add external NYBOSS repository references during default project creation.
-
-## Solution Registration
-
-The projects must be added to:
-
-BNPP.NYBOSS.NextGen.Server.sln
-
-Example:
-
-dotnet sln BNPP.NYBOSS.NextGen.Server.sln add Apps/Business/Customer/Customer.Common/Customer.Common.csproj
-
-Repeat for each generated project.
-
-## Explicit Components
-
-If the user specifies components, create only the requested components.
-
-Example:
-
-Create Customer with Common and Services
-
-Result:
-
-Customer/
-├── Customer.Common/
-└── Customer.Services/
-
-Do not automatically add API, Repository, MessageProcessing, or Host.
-
-## Existing Project Pattern
-
-If the user specifies:
-
-"similar to ManualForecast"
-
-inspect:
-
-Apps/Business/ManualForecast/
-
-Determine its project composition.
-
-For example, if the reference contains:
+ManualForecast contains:
 
 ManualForecast.API
 ManualForecast.Common
@@ -155,28 +17,11 @@ ManualForecast.MessageProcessingHost
 ManualForecast.Repository
 ManualForecast.Services
 
-then the new project should contain equivalent components:
+Its composition is an example of a multi-project Business application.
 
-Customer.API
-Customer.Common
-Customer.MessageProcessing
-Customer.MessageProcessingHost
-Customer.Repository
-Customer.Services
+## Known Example: TradeLifeStatus
 
-Only the structure is reused.
-
-The existing project naming convention is not reused.
-
-## Existing Project Pattern Example
-
-If the user says:
-
-"Create TradeSettlement similar to TradeLifeStatus"
-
-inspect the actual TradeLifeStatus directory before creating the new project.
-
-If its composition is:
+TradeLifeStatus contains:
 
 Aft.Services
 Odin.Services
@@ -185,23 +30,70 @@ TradeLifeStatus.Repository
 TradeLifeStatusInternal.Host
 TradeLifeStatusInternal.Services
 
-the new project names should follow the new convention and the requested project name.
+This demonstrates that NYBOSS applications can have different project compositions.
 
-Do not add the legacy BNPP.NYBOSS prefix.
+## Important Rule
 
-## Project Contents
+Do not assume that every application contains:
 
-Do not create application contents during Phase 1.
+API
+Common
+Repository
+Services
 
-For example, do not automatically create:
+These are the default components for a new simple/basic/normal Business project.
 
-Controllers/
-Models/
-Services/
-Repositories/
-Interfaces/
-Handlers/
+Other applications may require different components.
 
-unless they are required as part of the project template itself or explicitly requested.
+## Existing Projects
 
-The objective of Phase 1 is project creation, not feature implementation.
+Existing projects may use names such as:
+
+BNPP.NYBOSS.<Project>.<Component>
+
+This is a legacy/existing naming convention.
+
+New projects must NOT copy that naming convention.
+
+New projects use:
+
+<ProjectName>.<Component>
+
+Example:
+
+Customer.API
+Customer.Common
+Customer.Repository
+Customer.Services
+
+## Application Location
+
+Business applications are located under:
+
+Apps/Business/
+
+Core applications are located under:
+
+Apps/Core/
+
+The application location must be determined from the user's request.
+
+If the user asks for a Business project and does not provide another location, use:
+
+Apps/Business/
+
+## Solution
+
+The repository uses the existing solution:
+
+BNPP.NYBOSS.NextGen.Server.sln
+
+New projects belong to this solution.
+
+Do not create a separate solution for a newly generated application.
+
+## Phase 1 Boundary
+
+Project structure is currently the focus.
+
+Detailed contents inside each project will be automated in a later phase.
