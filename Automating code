@@ -8,28 +8,63 @@ import { parse } from 'yaml';
 // Configuration types
 // ==================================================
 
+type ComponentType =
+  | 'grid'
+  | 'wrapper'
+  | 'standard';
+
+
 interface ComponentConfig {
+  /*
+   * Component name.
+   *
+   * Example:
+   * customer-grid
+   */
   name: string;
-  type: string;
 
   /*
-   * Optional NYBOSS-specific supporting files.
+   * Supported NYBOSS component types.
    *
-   * These default to false when not specified.
+   * grid
+   * wrapper
+   * standard
+   */
+  type: ComponentType;
+
+  /*
+   * Optional supporting files.
+   *
+   * If omitted:
+   *     false
+   *
+   * If true:
+   *     view service is created.
    */
   viewService?: boolean;
+
+  /*
+   * Optional data source service.
+   *
+   * If omitted:
+   *     false
+   *
+   * If true:
+   *     data source service is created.
+   */
   dataSource?: boolean;
 
   /*
-   * Generic future supporting files.
+   * Additional component-specific files.
+   *
+   * This allows future NYBOSS files to be added
+   * without changing this generator.
    *
    * Example:
    *
    * files:
    *   - customer-helper.ts
    *   - customer-config.ts
-   *
-   * These files are created inside the component folder.
    */
   files?: string[];
 }
@@ -202,7 +237,11 @@ function validateSupportingFileName(
   fileName: string
 ): void {
 
-  if (!fileName.trim()) {
+  const trimmedFileName =
+    fileName.trim();
+
+
+  if (!trimmedFileName) {
 
     throw new Error(
       'Component supporting file name cannot be empty.'
@@ -211,18 +250,115 @@ function validateSupportingFileName(
 
 
   /*
-   * Prevent absolute paths or paths that escape
-   * the component directory.
+   * Prevent absolute paths and paths that can
+   * escape the component directory.
    */
   if (
-    path.isAbsolute(fileName) ||
-    fileName.includes('..')
+    path.isAbsolute(trimmedFileName) ||
+    trimmedFileName.includes('..')
   ) {
 
     throw new Error(
       `Invalid component supporting file path '${fileName}'.\n` +
       'Supporting files must remain inside the component directory.'
     );
+  }
+}
+
+
+// ==================================================
+// Validate component configuration
+// ==================================================
+
+function validateComponent(
+  component: ComponentConfig
+): void {
+
+  if (!component.name?.trim()) {
+
+    throw new Error(
+      'Each component must have a name.'
+    );
+  }
+
+
+  if (!component.type) {
+
+    throw new Error(
+      `Component '${component.name}' must have a type.`
+    );
+  }
+
+
+  const componentType =
+    component.type
+      .trim()
+      .toLowerCase();
+
+
+  if (
+    componentType !== 'grid' &&
+    componentType !== 'wrapper' &&
+    componentType !== 'standard'
+  ) {
+
+    throw new Error(
+      `Invalid component type '${component.type}' for component '${component.name}'.\n\n` +
+      'Supported component types are:\n' +
+      '- grid\n' +
+      '- wrapper\n' +
+      '- standard'
+    );
+  }
+
+
+  /*
+   * Validate optional boolean properties.
+   */
+  if (
+    component.viewService !== undefined &&
+    typeof component.viewService !== 'boolean'
+  ) {
+
+    throw new Error(
+      `Invalid viewService value for component '${component.name}'.\n` +
+      'viewService must be true or false.'
+    );
+  }
+
+
+  if (
+    component.dataSource !== undefined &&
+    typeof component.dataSource !== 'boolean'
+  ) {
+
+    throw new Error(
+      `Invalid dataSource value for component '${component.name}'.\n` +
+      'dataSource must be true or false.'
+    );
+  }
+
+
+  /*
+   * Validate future supporting files.
+   */
+  if (component.files) {
+
+    if (!Array.isArray(component.files)) {
+
+      throw new Error(
+        `Invalid files configuration for component '${component.name}'.\n` +
+        'files must be a list of file names.'
+      );
+    }
+
+
+    for (
+      const file of component.files
+    ) {
+
+      validateSupportingFileName(file);
+    }
   }
 }
 
@@ -327,6 +463,21 @@ if (
 }
 
 
+// ==================================================
+// 5. Validate components
+// ==================================================
+
+if (config.components) {
+
+  for (
+    const component of config.components
+  ) {
+
+    validateComponent(component);
+  }
+}
+
+
 console.log(
   `Project name: ${projectName}`
 );
@@ -335,7 +486,7 @@ console.log();
 
 
 // ==================================================
-// 5. Validate projects directory
+// 6. Validate projects directory
 // ==================================================
 
 if (!fs.existsSync(projectsPath)) {
@@ -347,7 +498,7 @@ if (!fs.existsSync(projectsPath)) {
 
 
 // ==================================================
-// 6. Check existing project
+// 7. Check existing project
 // ==================================================
 
 const projectPath =
@@ -373,7 +524,7 @@ console.log();
 
 
 // ==================================================
-// 7. Display configuration
+// 8. Display configuration
 // ==================================================
 
 console.log(
@@ -430,7 +581,7 @@ console.log();
 
 
 // ==================================================
-// 8. Create Angular application
+// 9. Create Angular application
 // ==================================================
 
 runAngularCommand(
@@ -456,7 +607,7 @@ runAngularCommand(
 
 
 // ==================================================
-// 9. Verify application
+// 10. Verify application
 // ==================================================
 
 if (!fs.existsSync(projectPath)) {
@@ -484,7 +635,7 @@ if (!fs.existsSync(generatedAppPath)) {
 
 
 // ==================================================
-// 10. NYBOSS application paths
+// 11. NYBOSS application paths
 // ==================================================
 
 const nybossAppPath =
@@ -523,7 +674,7 @@ const storePath =
 
 
 // ==================================================
-// 11. Create NYBOSS base folders
+// 12. Create NYBOSS base folders
 // ==================================================
 
 createDirectory(
@@ -552,7 +703,7 @@ if (config.store?.enabled) {
 
 
 // ==================================================
-// 12. Constants
+// 13. Constants
 // ==================================================
 
 createFile(
@@ -569,7 +720,7 @@ console.log(
 
 
 // ==================================================
-// 13. Routes
+// 14. Routes
 // ==================================================
 
 if (config.routing?.enabled) {
@@ -589,19 +740,19 @@ if (config.routing?.enabled) {
 
 
 // ==================================================
-// 14. Guard
+// 15. Guard
 // ==================================================
 
 if (config.guard?.enabled) {
 
   /*
-   * Guard is intentionally created as a file
+   * Guard is intentionally created directly
    * instead of using Angular CLI.
    *
-   * This avoids the existing guard schematic
-   * configuration problem in the workspace.
+   * This avoids the existing workspace guard
+   * schematic configuration issue.
    *
-   * angular.json is not modified manually.
+   * angular.json is not manually modified.
    */
 
   const guardPath =
@@ -643,7 +794,7 @@ if (config.guard?.enabled) {
 
 
 // ==================================================
-// 15. Models
+// 16. Models
 // ==================================================
 
 if (config.models?.length) {
@@ -683,7 +834,7 @@ if (config.models?.length) {
 
 
 // ==================================================
-// 16. Services
+// 17. Services
 // ==================================================
 
 if (config.services?.length) {
@@ -754,7 +905,7 @@ if (config.services?.length) {
 
 
 // ==================================================
-// 17. Components
+// 18. Components
 // ==================================================
 
 if (config.components?.length) {
@@ -786,10 +937,19 @@ if (config.components?.length) {
       `${projectName}/components/${componentName}`;
 
 
+    // ----------------------------------------------
+    // Generate Angular component
+    // ----------------------------------------------
+
     /*
-     * Components continue to use Angular CLI
-     * because Angular generates the standard
-     * component boilerplate.
+     * Angular CLI generates:
+     *
+     * component.ts
+     * component.html
+     * component.scss
+     * component.spec.ts
+     *
+     * depending on tests.enabled.
      */
 
     const componentArgs: string[] = [
@@ -833,16 +993,18 @@ if (config.components?.length) {
     // ----------------------------------------------
 
     /*
-     * Default:
-     * viewService = false
+     * viewService defaults to false.
      *
      * Therefore:
      *
+     * viewService omitted
+     *     -> no view service
+     *
+     * viewService: false
+     *     -> no view service
+     *
      * viewService: true
      *     -> create view service
-     *
-     * viewService omitted
-     *     -> do not create view service
      */
 
     if (component.viewService === true) {
@@ -882,16 +1044,18 @@ if (config.components?.length) {
     // ----------------------------------------------
 
     /*
-     * Default:
-     * dataSource = false
+     * dataSource defaults to false.
      *
      * Therefore:
      *
+     * dataSource omitted
+     *     -> no data source service
+     *
+     * dataSource: false
+     *     -> no data source service
+     *
      * dataSource: true
      *     -> create data source service
-     *
-     * dataSource omitted
-     *     -> do not create data source service
      */
 
     if (component.dataSource === true) {
@@ -927,12 +1091,12 @@ if (config.components?.length) {
 
 
     // ----------------------------------------------
-    // Generic future supporting files
+    // Additional future files
     // ----------------------------------------------
 
     /*
-     * Future NYBOSS-specific files can be added
-     * without changing this generator.
+     * Generic files allow future NYBOSS-specific
+     * component files without changing the generator.
      *
      * Example:
      *
@@ -940,7 +1104,7 @@ if (config.components?.length) {
      *   - customer-helper.ts
      *   - customer-config.ts
      *
-     * The files are created exactly as specified.
+     * These are created exactly as specified.
      */
 
     if (component.files?.length) {
@@ -969,36 +1133,9 @@ if (config.components?.length) {
 
 
         console.log(
-          `Created: ${componentName}/${fileName}`
+          `Created: components/${componentName}/${fileName}`
         );
-
-
-        /*
-         * If the future file is a TypeScript spec file,
-         * it is created exactly as requested.
-         *
-         * We do not automatically create another spec
-         * because the generic file may represent any
-         * future NYBOSS-specific file type.
-         */
       }
-    }
-
-
-    // ----------------------------------------------
-    // Component type information
-    // ----------------------------------------------
-
-    if (
-      componentType !== 'standard' &&
-      componentType !== 'grid' &&
-      componentType !== 'modal' &&
-      componentType !== 'wrapper'
-    ) {
-
-      console.warn(
-        `Warning: Unknown component type '${component.type}' for '${componentName}'.`
-      );
     }
 
 
@@ -1010,7 +1147,7 @@ if (config.components?.length) {
 
 
 // ==================================================
-// 18. Store
+// 19. Store
 // ==================================================
 
 if (config.store?.enabled) {
@@ -1096,7 +1233,7 @@ if (config.store?.enabled) {
 
 
 // ==================================================
-// 19. Final summary
+// 20. Final summary
 // ==================================================
 
 console.log();
