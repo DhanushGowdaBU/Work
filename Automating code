@@ -1,7 +1,177 @@
-{
-  "name": "nyb-project-generator",
-  "private": true,
-  "scripts": {
-    "generate": "tsx generate-project.ts"
-  }
-}
+---
+name: dotnet-developer
+description: Create and modify NYBOSS .NET server projects using the repository's project structure and conventions.
+---
+
+# NYBOSS .NET Developer
+
+You are working on the NYBOSS .NET server repository.
+
+Follow the NYBOSS project creation rules in this skill and its reference files.
+
+## Current Scope
+
+The current automation phase focuses ONLY on creating .NET projects.
+
+Do not generate the internal application contents such as:
+- Controllers
+- Models
+- Interfaces
+- Service classes
+- Repository classes
+- Business logic
+- Message handlers
+- Dependency injection registrations
+
+unless the user explicitly requests them.
+
+## Project Creation
+
+When the user asks to create a new project, determine the required project composition using these rules.
+
+### 1. Simple/default project
+
+If the user asks for:
+- a simple project
+- a basic project
+- a normal project
+- a standard project
+- a project without specifying its structure
+
+use the default NYBOSS Business project composition:
+
+- API
+- Common
+- Repository
+- Services
+
+Example:
+
+Customer
+
+becomes:
+
+Customer.API
+Customer.Common
+Customer.Repository
+Customer.Services
+
+### 2. Explicit project composition
+
+If the user explicitly specifies project components, create only those components.
+
+Example:
+
+"Create Customer with Common, Repository and Services"
+
+creates:
+
+Customer.Common
+Customer.Repository
+Customer.Services
+
+Do not add API unless requested.
+
+### 3. Similar to an existing project
+
+If the user says:
+
+"Create Customer similar to ManualForecast"
+
+inspect the existing ManualForecast project structure and determine which project components it contains.
+
+Use that structure as the reference for the new project.
+
+The existing project's naming convention must NOT be copied.
+
+For example:
+
+ManualForecast.API
+
+becomes:
+
+Customer.API
+
+not:
+
+BNPP.NYBOSS.Customer.API
+
+Existing projects are used as structural references only.
+
+## Naming Convention
+
+All newly created projects must use:
+
+<ProjectName>.<Component>
+
+Examples:
+
+Customer.API
+Customer.Common
+Customer.Repository
+Customer.Services
+
+Do NOT add the legacy `BNPP.NYBOSS` prefix to newly generated project names.
+
+Existing project names must not determine the naming convention of newly created projects.
+
+## Project References
+
+During project creation:
+
+- Add only the basic references required between the newly created project components.
+- Do NOT copy all ProjectReference entries from an existing project.
+- Do NOT add references to unrelated existing NYBOSS projects automatically.
+- Do NOT add Infrastructure, Gateway, Core, or other external project references unless explicitly required by the user's request or the selected project pattern.
+
+External project references will be handled separately when the user requests them.
+
+## Solution
+
+New projects must be added to the existing NYBOSS solution:
+
+BNPP.NYBOSS.NextGen.Server.sln
+
+Do not create a new solution for an application.
+
+## .NET CLI
+
+Use the .NET CLI for project creation and solution operations.
+
+Use the appropriate `dotnet new` template for the requested project type.
+
+Use:
+
+dotnet sln <solution> add <project>
+
+to add newly created projects to the existing solution.
+
+Use:
+
+dotnet add <project> reference <referenced-project>
+
+only when a project-to-project reference is required.
+
+## Important
+
+Before creating a project similar to an existing NYBOSS project, inspect the existing project structure and its project file.
+
+Use the existing project to understand structure and purpose.
+
+Do not blindly copy its:
+- project name
+- assembly name
+- root namespace
+- project references
+- package references
+- business-specific configuration
+
+The generated project must follow the new naming convention defined above.
+
+For detailed project creation rules, read:
+
+references/project-creation.md
+
+For NYBOSS project structure information, read:
+
+references/project-structure.md
