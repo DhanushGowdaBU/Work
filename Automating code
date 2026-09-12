@@ -12,10 +12,28 @@ interface ComponentConfig {
   name: string;
   type: string;
 
-  // Optional NYBOSS-specific supporting files
+  /*
+   * Optional NYBOSS-specific supporting files.
+   *
+   * These default to false when not specified.
+   */
   viewService?: boolean;
   dataSource?: boolean;
+
+  /*
+   * Generic future supporting files.
+   *
+   * Example:
+   *
+   * files:
+   *   - customer-helper.ts
+   *   - customer-config.ts
+   *
+   * These files are created inside the component folder.
+   */
+  files?: string[];
 }
+
 
 interface ProjectConfig {
   application: {
@@ -171,6 +189,39 @@ function runAngularCommand(
 
     throw new Error(
       `Angular CLI operation failed: ${description}`
+    );
+  }
+}
+
+
+// ==================================================
+// Validate supporting file name
+// ==================================================
+
+function validateSupportingFileName(
+  fileName: string
+): void {
+
+  if (!fileName.trim()) {
+
+    throw new Error(
+      'Component supporting file name cannot be empty.'
+    );
+  }
+
+
+  /*
+   * Prevent absolute paths or paths that escape
+   * the component directory.
+   */
+  if (
+    path.isAbsolute(fileName) ||
+    fileName.includes('..')
+  ) {
+
+    throw new Error(
+      `Invalid component supporting file path '${fileName}'.\n` +
+      'Supporting files must remain inside the component directory.'
     );
   }
 }
@@ -550,7 +601,7 @@ if (config.guard?.enabled) {
    * This avoids the existing guard schematic
    * configuration problem in the workspace.
    *
-   * angular.json is not modified.
+   * angular.json is not modified manually.
    */
 
   const guardPath =
@@ -658,9 +709,7 @@ if (config.services?.length) {
      *
      * Reason:
      * The workspace Angular CLI schematic currently
-     * rejects the existing "type" configuration with:
-     *
-     * Data path must NOT have additional properties (type)
+     * rejects the existing "type" configuration.
      *
      * This generator does not modify angular.json.
      */
@@ -681,10 +730,6 @@ if (config.services?.length) {
       `Created: services/${serviceName}.service.ts`
     );
 
-
-    /*
-     * Create service spec only when tests are enabled.
-     */
 
     if (config.tests?.enabled) {
 
@@ -788,13 +833,16 @@ if (config.components?.length) {
     // ----------------------------------------------
 
     /*
-     * View service is NOT automatically created.
+     * Default:
+     * viewService = false
      *
-     * It is created only when:
+     * Therefore:
      *
      * viewService: true
+     *     -> create view service
      *
-     * is specified in the YAML configuration.
+     * viewService omitted
+     *     -> do not create view service
      */
 
     if (component.viewService === true) {
@@ -834,13 +882,16 @@ if (config.components?.length) {
     // ----------------------------------------------
 
     /*
-     * Data source service is NOT automatically created.
+     * Default:
+     * dataSource = false
      *
-     * It is created only when:
+     * Therefore:
      *
      * dataSource: true
+     *     -> create data source service
      *
-     * is specified in the YAML configuration.
+     * dataSource omitted
+     *     -> do not create data source service
      */
 
     if (component.dataSource === true) {
@@ -871,6 +922,65 @@ if (config.components?.length) {
         console.log(
           `Created: ${componentName}-data-source.service.spec.ts`
         );
+      }
+    }
+
+
+    // ----------------------------------------------
+    // Generic future supporting files
+    // ----------------------------------------------
+
+    /*
+     * Future NYBOSS-specific files can be added
+     * without changing this generator.
+     *
+     * Example:
+     *
+     * files:
+     *   - customer-helper.ts
+     *   - customer-config.ts
+     *
+     * The files are created exactly as specified.
+     */
+
+    if (component.files?.length) {
+
+      for (
+        const file of component.files
+      ) {
+
+        validateSupportingFileName(file);
+
+
+        const fileName =
+          file.trim();
+
+
+        const futureFilePath =
+          path.join(
+            componentDirectory,
+            fileName
+          );
+
+
+        createFile(
+          futureFilePath
+        );
+
+
+        console.log(
+          `Created: ${componentName}/${fileName}`
+        );
+
+
+        /*
+         * If the future file is a TypeScript spec file,
+         * it is created exactly as requested.
+         *
+         * We do not automatically create another spec
+         * because the generic file may represent any
+         * future NYBOSS-specific file type.
+         */
       }
     }
 
