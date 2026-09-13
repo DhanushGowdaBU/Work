@@ -1,6 +1,6 @@
 # NYBOSS Project Creation
 
-## Default Project
+## Default Business Project
 
 When the user requests a simple, basic, normal, standard, or unspecified Business project, create:
 
@@ -15,74 +15,17 @@ Apps/Business/<ProjectName>/
 
 ---
 
-## Explicit Project Composition
+# Target Framework
 
-When the user specifies components, create only those components.
-
-For example:
-
-"Create <ProjectName> with Common, Repository and Services"
-
-creates:
-
-<ProjectName>.Common
-<ProjectName>.Repository
-<ProjectName>.Services
-
-Do not add components that were not requested.
-
----
-
-## Similar Project
-
-When the user requests a project similar to an existing project:
-
-1. Inspect the existing project's project-level structure.
-2. Identify its components.
-3. Create equivalent components for the requested project name.
-4. Use the new naming convention.
-5. Configure references between the newly created components where applicable.
-
-Only the structure and applicable project configuration should be reused.
-
----
-
-## Project Naming
-
-Use:
-
-<ProjectName>.<Component>
-
-Examples:
-
-<ProjectName>.API
-<ProjectName>.Common
-<ProjectName>.Repository
-<ProjectName>.Services
-
-The same project name must be used consistently throughout the generated project.
-
----
-
-## Target Framework
-
-Use:
+All generated projects must target:
 
 net8.0
 
-API:
-
-dotnet new webapi --framework net8.0
-
-Class library:
-
-dotnet new classlib --framework net8.0
-
-Do not use the latest installed framework automatically.
+Use the framework explicitly when creating the project.
 
 ---
 
-## API Project
+# API Project
 
 Create:
 
@@ -90,45 +33,97 @@ Create:
 
 using the ASP.NET Core Web API template.
 
-The project must target:
+Command:
 
-net8.0
+dotnet new webapi --framework net8.0 --name <ProjectName>.API
 
-The generated API project should contain the standard files produced by the .NET 8 Web API template.
+The API project must contain the standard Web API project files and the following NYBOSS structure where applicable:
+
+<ProjectName>.API/
+├── Controllers/
+├── Properties/
+├── appsettings.json
+├── appsettings.Development.json
+├── appsettings.Local.json
+├── build-info.json
+├── <ProjectName>.API.csproj
+└── Program.cs
+
+The Properties folder should contain the standard launch settings file when applicable.
+
+Do not create business-specific controllers unless requested.
 
 ---
 
-## Common Project
+# Common Project
 
 Create:
 
 <ProjectName>.Common
 
-as a .NET class-library project targeting net8.0.
+using:
+
+dotnet new classlib --framework net8.0 --name <ProjectName>.Common
+
+The standard structure is:
+
+<ProjectName>.Common/
+├── Constants/
+├── Contracts/
+│   ├── Repository/
+│   └── Services/
+├── Models/
+├── Options/
+├── GlobalUsings.cs
+└── <ProjectName>.Common.csproj
+
+The folders are created as part of the project structure.
+
+Do not create business-specific models, constants, contracts, or options unless requested.
 
 ---
 
-## Repository Project
+# Repository Project
 
 Create:
 
 <ProjectName>.Repository
 
-as a .NET class-library project targeting net8.0.
+using:
+
+dotnet new classlib --framework net8.0 --name <ProjectName>.Repository
+
+The standard project contains:
+
+<ProjectName>.Repository/
+├── RegisterServices.cs
+└── <ProjectName>.Repository.csproj
+
+Create additional repository files only when the user requests specific repository functionality.
 
 ---
 
-## Services Project
+# Services Project
 
 Create:
 
 <ProjectName>.Services
 
-as a .NET class-library project targeting net8.0.
+using:
+
+dotnet new classlib --framework net8.0 --name <ProjectName>.Services
+
+The standard project contains:
+
+<ProjectName>.Services/
+├── RegisterServices.cs
+└── <ProjectName>.Services.csproj
+
+Create additional service files only when the user requests specific service functionality.
 
 ---
 
-## Default References
+# Default Project References
 
 For the default composition:
 
@@ -144,83 +139,117 @@ create:
 
 <ProjectName>.Services
     -> <ProjectName>.Common
-
-<ProjectName>.Services
     -> <ProjectName>.Repository
 
 <ProjectName>.Repository
     -> <ProjectName>.Common
 
-Only the newly created project's components should be referenced.
-
----
-
-## Creating References
-
 Use:
 
 dotnet add <project> reference <referenced-project>
 
-Example pattern:
-
-dotnet add <ProjectName>.API/<ProjectName>.API.csproj reference <ProjectName>.Services/<ProjectName>.Services.csproj
-
-The actual path must use the generated project name.
-
-Do not reference another existing application's project.
+The references must point to components belonging to the same newly created project.
 
 ---
 
-## Solution
+# Explicit Project Composition
 
-Use the existing solution:
+If the user specifies components, create only those components.
+
+Example:
+
+"Create <ProjectName> with API, Common and Services"
+
+creates:
+
+<ProjectName>.API
+<ProjectName>.Common
+<ProjectName>.Services
+
+Create only the folders and files applicable to those components.
+
+For references, use only references that are valid for the components that actually exist.
+
+Do not create references to components that were not created.
+
+---
+
+# Similar Project
+
+If the user requests:
+
+"Create <ProjectName> similar to <ExistingProject>"
+
+inspect the existing project before creating the new one.
+
+Inspect:
+
+- project directories
+- project files
+- folders
+- files
+- project types
+- applicable project configuration
+- applicable internal project relationships
+
+Then recreate the equivalent structure using:
+
+<ProjectName>.<Component>
+
+The new project should contain equivalent folders and applicable files.
+
+Rename project-specific files and namespaces to the new project name.
+
+Do not copy unrelated external references.
+
+Do not copy unrelated application-specific dependencies.
+
+Do not copy business-specific implementation when it cannot be safely generalized.
+
+---
+
+# Solution
+
+Use:
 
 BNPP.NYBOSS.NextGen.Server.sln
 
-Add each generated project using:
+Add every generated project using:
 
 dotnet sln BNPP.NYBOSS.NextGen.Server.sln add <project-path>
 
-Do not create a new solution.
+Do not create a separate solution.
 
 ---
 
-## Project Directory
+# Project Configuration
 
-For a Business project:
+New project files must:
 
-Apps/Business/<ProjectName>/
+- target net8.0
+- use the new project name
+- use the new naming convention
+- contain only required package references
+- contain only applicable project references
 
-Example structure:
-
-Apps/Business/<ProjectName>/
-├── <ProjectName>.API/
-├── <ProjectName>.Common/
-├── <ProjectName>.Repository/
-└── <ProjectName>.Services/
-
-Each component directory contains its corresponding .csproj.
+Do not copy legacy organizational prefixes into AssemblyName or RootNamespace.
 
 ---
 
-## Generated Project Files
+# Project Contents
 
-The generated projects must be valid .NET 8 projects.
+The generated project must contain the standard structure for its project type.
 
-The project files must use the new project name.
+Do not invent business-specific implementation.
 
-Do not copy legacy assembly or namespace names from an existing project.
+For example, when creating:
 
-Do not copy unrelated package references.
+<ProjectName>.Services
 
-Do not copy unrelated project references.
+do not automatically create:
 
----
+<ProjectName>Service.cs
 
-## Project Contents
+unless the user requested a specific service.
 
-Create the standard project files produced by the selected .NET template.
-
-Do not generate application-specific implementation code unless requested.
-
-The project creation request should produce a usable .NET solution structure.
+The same rule applies to repositories, controllers, models, and other business-specific files.
