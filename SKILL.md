@@ -9,7 +9,7 @@ Use this skill when the user asks to create or modify a NYBOSS .NET server proje
 
 Read the relevant reference files before performing the requested operation.
 
-## Project Creation
+# Project Creation
 
 There are three supported project creation modes:
 
@@ -17,11 +17,22 @@ There are three supported project creation modes:
 2. Explicit project composition
 3. Project similar to an existing project
 
-The selected creation mode determines the project composition and internal structure.
+All three modes currently generate the project structure only.
+
+Project structure generation means:
+
+- projects
+- directories
+- file names
+- .csproj files required by project creation
+- solution entries
+- project-to-project references
+
+Do not generate or copy business implementation content at this stage.
 
 ---
 
-## 1. Default Project
+# 1. Default Project
 
 If the user asks for a:
 
@@ -32,14 +43,7 @@ If the user asks for a:
 - regular project
 - project without specifying components
 
-create the default Business project composition:
-
-- API
-- Common
-- Repository
-- Services
-
-For a project named `<ProjectName>`, create:
+create:
 
 <ProjectName>.API
 <ProjectName>.Common
@@ -50,7 +54,7 @@ under:
 
 Apps/Business/<ProjectName>/
 
-Use the standard internal structure defined in:
+Use the standard structure defined in:
 
 references/project-creation.md
 
@@ -58,13 +62,17 @@ and:
 
 references/project-structure.md
 
+Create the required folders and file names.
+
+Do not create business-specific implementation.
+
 ---
 
-## 2. Explicit Project Composition
+# 2. Explicit Project Composition
 
 If the user explicitly specifies the project components, create only those components.
 
-Example:
+For example:
 
 "Create a project with Common, Repository and Services"
 
@@ -76,29 +84,63 @@ creates:
 
 Do not add API or any other component that was not requested.
 
-Create the standard folders and files applicable to each selected component.
+Create only the folders and file names applicable to the selected components.
 
 ---
 
-## 3. Similar to an Existing Project
+# 3. Similar to an Existing Project
 
 If the user asks for a project similar to an existing project:
 
 1. Locate the existing project.
-2. Inspect its complete project-level structure.
-3. Inspect the folders inside each project.
-4. Inspect the files inside those folders.
-5. Determine the project types and internal structure.
-6. Create equivalent projects for the new project name.
-7. Recreate the applicable folders and files.
-8. Replace the old project name with the new project name where applicable.
-9. Apply the new project naming convention.
-10. Recreate applicable internal project references using the new project names.
-11. Do not copy unrelated external project references.
-12. Do not copy unrelated project-specific dependencies.
-13. Do not copy business-specific implementation when it cannot be generalized safely.
+2. Inspect its project-level directory structure.
+3. Inspect the directory names inside each project.
+4. Inspect the file names inside those directories.
+5. Determine the project composition.
+6. Recreate the equivalent project composition for the new project.
+7. Recreate the applicable folder structure.
+8. Recreate the applicable file names.
+9. Rename project-specific names to the new project name.
+10. Apply the new project naming convention.
+11. Create applicable project-to-project references using the new project names.
 
-The purpose of a similar-project request is to reproduce the structure and applicable project setup of the reference project for the new project.
+## Important
+
+For a similar-project request, inspect the existing project only for its:
+
+- project names
+- folder names
+- file names
+- project relationships
+- project types
+
+Do NOT inspect existing source files to reproduce their contents.
+
+Do NOT copy:
+
+- source-code implementation
+- business logic
+- method implementations
+- class implementations
+- configuration values
+- connection strings
+- secrets
+- business-specific JSON content
+- business-specific XML content
+- business-specific settings
+- existing application data
+
+At this stage, the goal is to reproduce the STRUCTURE, not the CONTENT.
+
+If an existing project contains:
+
+<folder>/<file>
+
+create the corresponding:
+
+<new-project-folder>/<file>
+
+but do not copy the contents of the original file.
 
 ---
 
@@ -136,10 +178,6 @@ All newly created NYBOSS projects must target:
 
 net8.0
 
-Use the .NET 8 framework explicitly.
-
-Do not allow the latest installed SDK/framework to be selected automatically.
-
 Every generated project must contain:
 
 <TargetFramework>net8.0</TargetFramework>
@@ -166,7 +204,7 @@ dotnet add <project> reference <referenced-project>
 
 for project-to-project references.
 
-Use OpenCode's shell capabilities to execute the required commands.
+Use OpenCode shell capabilities to execute the required commands.
 
 ---
 
@@ -188,25 +226,11 @@ All projects target net8.0.
 
 ---
 
-# Internal Project Structure
-
-After creating the .NET projects, create the standard folders and files required by the selected project type.
-
-Read:
-
-references/project-creation.md
-
-for the standard project structure.
-
-Do not create business-specific classes unless the user requests them.
-
----
-
 # Project References
 
 When multiple components are created for the same new project, references must be between those newly created components.
 
-For example:
+Default references:
 
 <ProjectName>.API
     -> <ProjectName>.Services
@@ -217,8 +241,6 @@ For example:
 
 <ProjectName>.Repository
     -> <ProjectName>.Common
-
-The references must use the new project name.
 
 Do not reference equivalent projects belonging to another application.
 
@@ -231,8 +253,6 @@ Do not add unrelated external NYBOSS project references automatically.
 Do not automatically add references to existing external NYBOSS projects.
 
 If the user explicitly asks for an external project reference, add it only to the requested project.
-
-External project-reference operations are separate from normal project creation.
 
 ---
 
@@ -248,36 +268,72 @@ Every newly generated project must be added to the existing solution.
 
 ---
 
-# Project Contents
+# File and Folder Generation
 
-For a default or explicitly requested project:
+The current project-generation stage is STRUCTURE ONLY.
 
-1. Create the .NET project.
+For every generated project:
+
+1. Create the project.
 2. Create the required folders.
-3. Create the standard files.
-4. Create the applicable project configuration.
-5. Create basic internal project references.
+3. Create the required file names.
+4. Create the required .csproj.
+5. Add required project references.
 6. Add the project to the existing solution.
 
-Do not invent business-specific implementation.
+Do not populate business-specific file contents.
 
-For a similar-project request, inspect and reproduce the applicable folder/file structure of the reference project.
+Do not copy implementation from existing projects.
+
+Do not analyze existing source files for content.
+
+When a file must exist structurally, create the file with minimal/empty content appropriate for the current stage.
 
 ---
 
-# Similar Project File Handling
+# Similar Project Structure Generation
 
-When copying a structure from an existing project:
+When creating a project similar to an existing project, use the existing project as a STRUCTURAL REFERENCE ONLY.
 
-- Recreate applicable folders.
-- Recreate applicable structural files.
-- Rename project-specific files using the new project name.
-- Update project-specific namespaces and references where applicable.
-- Do not retain references to the original application.
-- Do not retain the original application's project name in generated project names.
-- Do not copy unrelated business implementation.
+Inspect:
 
-If a file is clearly business-specific and cannot be safely generalized, do not copy its business logic into the new project unless the user explicitly requests it.
+- project directories
+- folder names
+- file names
+- project types
+- project relationships
+
+Do not inspect the implementation inside source files unless required later by the user.
+
+The generated structure should preserve the applicable:
+
+- project composition
+- directory hierarchy
+- file hierarchy
+- project relationships
+
+while replacing the original project name with the requested new project name.
+
+---
+
+# Current Phase Boundary
+
+Do not implement application functionality during project creation.
+
+Do not:
+
+- implement controllers
+- implement services
+- implement repositories
+- implement models
+- implement business logic
+- copy existing implementation
+- copy configuration values
+- copy application-specific settings
+
+The purpose of this stage is to create the correct project skeleton.
+
+File contents and implementation will be handled in a later request.
 
 ---
 
@@ -286,12 +342,13 @@ If a file is clearly business-specific and cannot be safely generalized, do not 
 Before completing a project creation request, verify:
 
 1. The requested project exists.
-2. All required project components exist.
+2. All requested project components exist.
 3. Required folders exist.
-4. Required files exist.
+4. Required file names exist.
 5. Project names follow the new naming convention.
 6. All generated projects target net8.0.
 7. All generated projects are added to the existing solution.
 8. Basic references point to the newly generated project's components.
 9. No unintended external project references were added.
-10. The generated solution and project files are valid.
+10. No existing source-code implementation was copied into the generated project.
+11. The generated structure matches the requested creation mode.
