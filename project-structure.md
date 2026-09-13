@@ -2,7 +2,7 @@
 
 The NYBOSS server repository contains multiple applications and project types.
 
-Project composition can vary depending on the purpose of the application.
+Project composition can vary depending on application purpose.
 
 ## Business Applications
 
@@ -10,30 +10,60 @@ Business applications are normally located under:
 
 Apps/Business/
 
-A simple Business project uses:
+The default Business project contains:
 
 <ProjectName>.API
 <ProjectName>.Common
 <ProjectName>.Repository
 <ProjectName>.Services
 
-Result:
+---
 
-Apps/Business/<ProjectName>/
-├── <ProjectName>.API/
-├── <ProjectName>.Common/
-├── <ProjectName>.Repository/
-└── <ProjectName>.Services/
+## Default API Structure
+
+<ProjectName>.API/
+├── Controllers/
+├── Properties/
+├── appsettings.json
+├── appsettings.Development.json
+├── appsettings.Local.json
+├── build-info.json
+├── <ProjectName>.API.csproj
+└── Program.cs
 
 ---
 
-## Core Applications
+## Default Common Structure
 
-Core applications are normally located under:
+<ProjectName>.Common/
+├── Constants/
+├── Contracts/
+│   ├── Repository/
+│   └── Services/
+├── Models/
+├── Options/
+├── GlobalUsings.cs
+└── <ProjectName>.Common.csproj
 
-Apps/Core/
+---
 
-The project composition must be determined from the user's request or an explicitly selected existing project pattern.
+## Default Repository Structure
+
+<ProjectName>.Repository/
+├── RegisterServices.cs
+└── <ProjectName>.Repository.csproj
+
+Additional repository implementation files are created when requested.
+
+---
+
+## Default Services Structure
+
+<ProjectName>.Services/
+├── RegisterServices.cs
+└── <ProjectName>.Services.csproj
+
+Additional service implementation files are created when requested.
 
 ---
 
@@ -50,25 +80,7 @@ Examples:
 <ProjectName>.Repository
 <ProjectName>.Services
 
-Do not apply legacy organizational prefixes to newly created projects.
-
----
-
-## Project Types
-
-Common project types include:
-
-API
-Common
-Repository
-Services
-
-Other project types may exist in the repository.
-
-They should only be created when:
-
-- the user explicitly requests them, or
-- the user requests a project based on an existing project structure containing those components.
+Do not add legacy organizational prefixes to newly generated projects.
 
 ---
 
@@ -82,54 +94,35 @@ unless the user explicitly requests another framework.
 
 ---
 
-## Project References
+## Existing Project Pattern
 
-References should normally be established between components belonging to the same newly created project.
+When a user asks for a project similar to an existing project, inspect the existing project structure.
 
-For example:
+The generated project should reproduce:
 
-<ProjectName>.API
-    -> <ProjectName>.Services
+- applicable project components
+- applicable folders
+- applicable structural files
+- applicable project configuration
 
-<ProjectName>.Services
-    -> <ProjectName>.Common
-    -> <ProjectName>.Repository
+The new project name must be applied consistently.
 
-<ProjectName>.Repository
-    -> <ProjectName>.Common
+Do not blindly copy:
 
-External project references are not automatically added.
+- legacy project names
+- unrelated external references
+- unrelated packages
+- business-specific implementation
+- application-specific configuration
 
 ---
 
 ## Solution
 
-The server repository uses:
+The existing solution is:
 
 BNPP.NYBOSS.NextGen.Server.sln
 
-New projects must be added to this solution.
+All newly created projects belong to this solution.
 
-Do not create a separate solution for an application.
-
----
-
-## Existing Project Patterns
-
-When the user explicitly requests a project similar to an existing project, inspect that project's structure and use it as the pattern.
-
-Reuse:
-
-- project composition
-- applicable project types
-- applicable project-level configuration
-
-Do not blindly copy:
-
-- project names
-- legacy naming
-- unrelated references
-- unrelated packages
-- business-specific implementation
-
-The requested new project name must be applied to the generated structure.
+Do not create a separate solution.
