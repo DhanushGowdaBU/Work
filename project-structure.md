@@ -10,6 +10,20 @@ It does not define business implementation.
 
 ---
 
+# Application Areas
+
+NYBOSS projects can be organized under:
+
+Apps/Business/
+
+and:
+
+Apps/Core/
+
+The structure depends on the application area.
+
+---
+
 # Business Applications
 
 Business applications are normally located under:
@@ -23,19 +37,9 @@ The default Business project contains:
 <ProjectName>.Repository
 <ProjectName>.Services
 
-The project naming convention for new projects is:
-
-<ProjectName>.<Component>
-
 ---
 
-# Default API Structure
-
-The default API project is:
-
-<ProjectName>.API/
-
-Its expected structure is:
+# Default Business API Structure
 
 <ProjectName>.API/
 ├── Controllers/
@@ -48,28 +52,21 @@ Its expected structure is:
 ├── <ProjectName>.API.csproj
 └── Program.cs
 
-The API must use the controller-based ASP.NET Core Web API template.
+The API uses the controller-based ASP.NET Core Web API template.
 
-The template-generated `<ProjectName>.API.http` file is not part of the NYBOSS structure and must be removed.
+The template-generated:
 
-CLI-generated files such as:
+<ProjectName>.API.http
 
-- Program.cs
-- .csproj
-- launchSettings.json
-- appsettings files
+file is not part of the default NYBOSS structure.
 
-must retain their generated content unless a specific project configuration change is required.
+If generated, remove it.
+
+CLI-generated files must retain their generated content.
 
 ---
 
-# Default Common Structure
-
-The default Common project is:
-
-<ProjectName>.Common/
-
-Its structure is:
+# Default Business Common Structure
 
 <ProjectName>.Common/
 ├── Constants/
@@ -86,7 +83,7 @@ Its structure is:
 ├── GlobalUsings.cs
 └── <ProjectName>.Common.csproj
 
-The structural files ensure that the required directories are visible and represented in the project.
+The structural files ensure that the required directories are represented in the project.
 
 These files are skeleton files only.
 
@@ -94,45 +91,144 @@ Do not add business-specific implementation.
 
 ---
 
-# Default Repository Structure
-
-The default Repository project is:
-
-<ProjectName>.Repository/
-
-Its structure is:
+# Default Business Repository Structure
 
 <ProjectName>.Repository/
 ├── <ProjectName>Repository.cs
 ├── RegisterServices.cs
 └── <ProjectName>.Repository.csproj
 
-`<ProjectName>Repository.cs` is a structural repository class.
-
-`RegisterServices.cs` is a structural registration file.
+The files are structural skeletons.
 
 Do not add business-specific repository implementation.
 
 ---
 
-# Default Services Structure
-
-The default Services project is:
-
-<ProjectName>.Services/
-
-Its structure is:
+# Default Business Services Structure
 
 <ProjectName>.Services/
 ├── <ProjectName>Service.cs
 ├── RegisterServices.cs
 └── <ProjectName>.Services.csproj
 
-`<ProjectName>Service.cs` is a structural service class.
-
-`RegisterServices.cs` is a structural registration file.
+The files are structural skeletons.
 
 Do not add business-specific service implementation.
+
+---
+
+# Core Applications
+
+Core applications are normally located under:
+
+Apps/Core/
+
+The default Core project contains:
+
+<ProjectName>.API
+<ProjectName>.Domain
+<ProjectName>.Repository
+<ProjectName>.Services
+
+---
+
+# Default Core API Structure
+
+<ProjectName>.API/
+├── Controllers/
+├── Properties/
+│   └── launchSettings.json
+├── appsettings.json
+├── appsettings.Development.json
+├── appsettings.Local.json
+├── build-info.json
+├── <ProjectName>.API.csproj
+└── Program.cs
+
+The API uses the controller-based ASP.NET Core Web API template.
+
+The template-generated:
+
+<ProjectName>.API.http
+
+file is not part of the default NYBOSS structure.
+
+If generated, remove it.
+
+CLI-generated files must retain their generated content.
+
+---
+
+# Default Core Domain Structure
+
+<ProjectName>.Domain/
+├── Models/
+│   └── <ProjectName>Model.cs
+├── Contracts/
+│   ├── Repository/
+│   │   └── I<ProjectName>Repository.cs
+│   └── Services/
+│       └── I<ProjectName>Service.cs
+├── Constants/
+│   └── <ProjectName>Constants.cs
+├── Options/
+│   └── <ProjectName>Options.cs
+├── GlobalUsings.cs
+└── <ProjectName>.Domain.csproj
+
+The Domain project represents the domain layer of the Core application.
+
+Domain is not automatically equivalent to Common.
+
+Do not replace Domain with Common when creating a Core project.
+
+The structural files are skeleton files only.
+
+Do not add business-specific implementation.
+
+---
+
+# Default Core Repository Structure
+
+<ProjectName>.Repository/
+├── <ProjectName>Repository.cs
+├── RegisterServices.cs
+└── <ProjectName>.Repository.csproj
+
+The files are structural skeletons.
+
+Do not add business-specific repository implementation.
+
+---
+
+# Default Core Services Structure
+
+<ProjectName>.Services/
+├── <ProjectName>Service.cs
+├── RegisterServices.cs
+└── <ProjectName>.Services.csproj
+
+The files are structural skeletons.
+
+Do not add business-specific service implementation.
+
+---
+
+# Common vs Domain
+
+Common and Domain are separate project types.
+
+Business default:
+
+<ProjectName>.Common
+
+Core default:
+
+<ProjectName>.Domain
+
+Common and Domain must not be treated as interchangeable.
+
+When a similar project is used as a reference, preserve the component type of the reference project.
 
 ---
 
@@ -142,7 +238,7 @@ Folders required by the project structure should not be left without a represent
 
 Create a minimal structural file appropriate to the folder.
 
-For example:
+Business Common examples:
 
 Constants/
     <ProjectName>Constants.cs
@@ -159,11 +255,30 @@ Contracts/Repository/
 Contracts/Services/
     I<ProjectName>Service.cs
 
-Repository/
-    <ProjectName>Repository.cs
+Core Domain examples:
 
-Services/
-    <ProjectName>Service.cs
+Models/
+    <ProjectName>Model.cs
+
+Constants/
+    <ProjectName>Constants.cs
+
+Options/
+    <ProjectName>Options.cs
+
+Contracts/Repository/
+    I<ProjectName>Repository.cs
+
+Contracts/Services/
+    I<ProjectName>Service.cs
+
+Repository:
+
+<ProjectName>Repository.cs
+
+Services:
+
+<ProjectName>Service.cs
 
 These files establish the project skeleton.
 
@@ -198,6 +313,7 @@ When the user asks for a project similar to an existing project, use the existin
 
 Determine:
 
+- application area
 - project composition
 - project types
 - project directories
@@ -267,10 +383,13 @@ Examples:
 
 <ProjectName>.API
 <ProjectName>.Common
+<ProjectName>.Domain
 <ProjectName>.Repository
 <ProjectName>.Services
 
 Do not add legacy organizational prefixes to newly generated projects.
+
+Existing projects with legacy prefixes are structural references only.
 
 Use the requested project name consistently in:
 
@@ -295,7 +414,7 @@ All generated project files should use the requested target framework explicitly
 
 ---
 
-# Default Project References
+# Default Business Project References
 
 The default Business composition uses:
 
@@ -309,7 +428,27 @@ The default Business composition uses:
 <ProjectName>.Repository
     -> <ProjectName>.Common
 
-References must point to the components of the same newly generated project.
+References must point to the components of the same newly generated Business project.
+
+Do not add unrelated external project references automatically.
+
+---
+
+# Default Core Project References
+
+The default Core composition uses:
+
+<ProjectName>.API
+    -> <ProjectName>.Services
+
+<ProjectName>.Services
+    -> <ProjectName>.Domain
+    -> <ProjectName>.Repository
+
+<ProjectName>.Repository
+    -> <ProjectName>.Domain
+
+References must point to the components of the same newly generated Core project.
 
 Do not add unrelated external project references automatically.
 
