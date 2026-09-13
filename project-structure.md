@@ -1,255 +1,135 @@
-# NYBOSS Server Project Structure
+# NYBOSS Project Structure
 
-The NYBOSS server repository contains multiple applications with different project compositions.
+The NYBOSS server repository contains multiple applications and project types.
 
-There is no single mandatory project structure for every application.
+Project composition can vary depending on the purpose of the application.
 
-Existing applications must therefore be treated as structural references.
+## Business Applications
 
----
-
-# Repository Structure
-
-The main server repository contains areas such as:
-
-Apps/
-Gateway/
-Infrastructure/
-Libraries/
-Proxy/
-Shared/
-Tests/
-
-Business applications are generally located under:
+Business applications are normally located under:
 
 Apps/Business/
 
-Core applications are generally located under:
-
-Apps/Core/
-
-The existing solution is:
-
-BNPP.NYBOSS.NextGen.Server.sln
-
----
-
-# Default New Business Project
-
-When a user asks for a simple/basic/normal Business project without specifying a structure, use:
+A simple Business project uses:
 
 <ProjectName>.API
 <ProjectName>.Common
 <ProjectName>.Repository
 <ProjectName>.Services
 
-Example:
+Result:
 
-Customer/
-├── Customer.API/
-├── Customer.Common/
-├── Customer.Repository/
-└── Customer.Services/
-
-All projects target:
-
-net8.0
+Apps/Business/<ProjectName>/
+├── <ProjectName>.API/
+├── <ProjectName>.Common/
+├── <ProjectName>.Repository/
+└── <ProjectName>.Services/
 
 ---
 
-# ManualForecast Example
+## Core Applications
 
-ManualForecast contains:
+Core applications are normally located under:
 
-ManualForecast.API
-ManualForecast.Common
-ManualForecast.MessageProcessing
-ManualForecast.MessageProcessingHost
-ManualForecast.Repository
-ManualForecast.Services
+Apps/Core/
 
-This demonstrates a multi-project Business application.
-
-It is a structural reference only.
-
-For a new project called Customer, the equivalent structure would use:
-
-Customer.API
-Customer.Common
-Customer.MessageProcessing
-Customer.MessageProcessingHost
-Customer.Repository
-Customer.Services
-
-Do not copy the existing project's legacy naming convention.
+The project composition must be determined from the user's request or an explicitly selected existing project pattern.
 
 ---
 
-# TradeLifeStatus Example
+## Project Naming
 
-TradeLifeStatus contains:
+New projects use:
 
-Aft.Services
-Odin.Services
-TradeLifeStatus.Common
-TradeLifeStatus.Repository
-TradeLifeStatusInternal.Host
-TradeLifeStatusInternal.Services
+<ProjectName>.<Component>
 
-This demonstrates that NYBOSS applications can have different project compositions.
+Examples:
 
-The generator must not assume that every application contains:
+<ProjectName>.API
+<ProjectName>.Common
+<ProjectName>.Repository
+<ProjectName>.Services
+
+Do not apply legacy organizational prefixes to newly created projects.
+
+---
+
+## Project Types
+
+Common project types include:
 
 API
 Common
 Repository
 Services
 
-Those four components are the DEFAULT for a new simple/basic/normal Business project.
+Other project types may exist in the repository.
 
-Existing project patterns may contain additional or different components.
+They should only be created when:
 
----
-
-# Existing Project Naming
-
-Existing NYBOSS projects may use names such as:
-
-BNPP.NYBOSS.Instrument.API
-BNPP.NYBOSS.ManualForecast.API
-BNPP.NYBOSS.ManualForecast.Services
-
-This is an existing/legacy naming convention.
-
-New projects must use:
-
-<ProjectName>.<Component>
-
-Examples:
-
-Customer.API
-Customer.Common
-Customer.Repository
-Customer.Services
-
-Do not add:
-
-BNPP.NYBOSS.
-
-to newly generated project names.
-
-Existing projects are references for structure and purpose only.
+- the user explicitly requests them, or
+- the user requests a project based on an existing project structure containing those components.
 
 ---
 
-# Existing Project Files
+## Target Framework
 
-Existing NYBOSS .csproj files may contain:
-
-- TargetFramework
-- PackageReference
-- ProjectReference
-- AssemblyName
-- RootNamespace
-- GenerateAssemblyInfo
-- GlobalAssemblyInfo
-- NYBOSS-specific build configuration
-- Project-specific dependencies
-
-Do not copy all of these settings automatically into a new project.
-
-Determine which settings are generic and required for the new project.
-
-The current default framework is:
+New projects target:
 
 net8.0
 
----
-
-# Project References
-
-Existing applications may contain many references to:
-
-- Infrastructure
-- Core
-- Gateway
-- DateService
-- MessageEngine
-- Messaging
-- Other NYBOSS applications
-
-These references must NOT be copied automatically when creating a new application.
-
-For a newly created application, basic references should point to the newly created application's own projects.
-
-Example:
-
-Customer.API
-    -> Customer.Services
-
-Customer.Services
-    -> Customer.Common
-    -> Customer.Repository
-
-Customer.Repository
-    -> Customer.Common
-
-Do not make:
-
-Customer.API
-    -> ManualForecast.Services
-
-or:
-
-Customer.Services
-    -> ManualForecast.Common
-
-The new application must reference its own generated components.
+unless the user explicitly requests another framework.
 
 ---
 
-# External References
+## Project References
 
-External NYBOSS references are added only when:
+References should normally be established between components belonging to the same newly created project.
 
-1. The user explicitly requests them, or
-2. A specifically requested project pattern requires a known external dependency.
+For example:
 
-Example:
+<ProjectName>.API
+    -> <ProjectName>.Services
 
-"Add BNPP.NYBOSS.DateService.Services reference to Customer.Services."
+<ProjectName>.Services
+    -> <ProjectName>.Common
+    -> <ProjectName>.Repository
 
-This should modify Customer.Services.csproj.
+<ProjectName>.Repository
+    -> <ProjectName>.Common
 
-It should not be automatically included merely because ManualForecast.Services.csproj or ManualForecast.API.csproj contains a similar reference.
+External project references are not automatically added.
 
 ---
 
-# Phase 1
+## Solution
 
-The current automation phase focuses only on:
+The server repository uses:
 
-- Creating project directories
-- Creating .csproj files
-- Selecting the correct .NET project type
-- Targeting net8.0
-- Creating basic internal project references
-- Adding projects to the existing solution
+BNPP.NYBOSS.NextGen.Server.sln
 
-Detailed project contents will be implemented later.
+New projects must be added to this solution.
 
-Do not automatically generate:
+Do not create a separate solution for an application.
 
-Controllers
-Models
-Contracts
-Interfaces
-Service implementations
-Repository implementations
-Handlers
-Strategies
-Constants
-Options
-Dependency injection registration
-Business logic
-API endpoints
+---
+
+## Existing Project Patterns
+
+When the user explicitly requests a project similar to an existing project, inspect that project's structure and use it as the pattern.
+
+Reuse:
+
+- project composition
+- applicable project types
+- applicable project-level configuration
+
+Do not blindly copy:
+
+- project names
+- legacy naming
+- unrelated references
+- unrelated packages
+- business-specific implementation
+
+The requested new project name must be applied to the generated structure.
