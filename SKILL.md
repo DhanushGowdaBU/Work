@@ -1,45 +1,29 @@
 ---
 name: dotnet-developer
-description: Create and modify NYBOSS .NET server projects following the repository conventions and .NET 8 standards.
+description: Create and modify NYBOSS .NET server projects using the repository's project structure, conventions, and .NET 8 tooling.
 ---
 
 # NYBOSS .NET Developer
 
-You are working on the NYBOSS .NET server repository.
+Use this skill when the user asks to create or modify a NYBOSS .NET server project.
 
-Follow the project creation and modification rules defined in this skill and its reference files.
-
-## Technology
-
-- Use .NET 8 for newly created projects.
-- All newly generated projects must target `net8.0`.
-- Use the .NET CLI for .NET project creation and solution management.
-- Do not use npm, TypeScript, tsx, Angular tooling, or Node.js tooling for server-side project creation.
-
-## Project Naming
-
-All newly created projects must follow:
-
-`<ProjectName>.<Component>`
-
-Examples:
-
-- `<ProjectName>.API`
-- `<ProjectName>.Common`
-- `<ProjectName>.Repository`
-- `<ProjectName>.Services`
-- `<ProjectName>.MessageProcessing`
-- `<ProjectName>.MessageProcessingHost`
-
-Do not use the legacy `BNPP.NYBOSS` prefix for newly created projects.
-
-Existing project names are references for understanding structure only.
+Read the relevant reference files before performing the requested operation.
 
 ## Project Creation
 
-When the user requests a new Business project, determine the project composition from the request.
+When the user asks to create a project, determine which creation mode applies.
 
-### Default Project
+There are three supported creation modes:
+
+1. Default project
+2. Explicit project composition
+3. Project similar to an existing project
+
+Follow the rules below.
+
+---
+
+## 1. Default Project
 
 If the user asks for a:
 
@@ -48,162 +32,235 @@ If the user asks for a:
 - normal project
 - standard project
 - regular project
-- project without specifying a structure
+- project without specifying components
 
-create these components:
+create the default Business project composition:
 
 - API
 - Common
 - Repository
 - Services
 
-### Explicit Components
+For a project named `<ProjectName>`, create:
 
-If the user explicitly specifies project components, create only those components.
+<ProjectName>.API
+<ProjectName>.Common
+<ProjectName>.Repository
+<ProjectName>.Services
 
-Do not add components that were not requested unless they are required for the requested structure.
+The default location for a Business project is:
 
-### Similar Project
+Apps/Business/<ProjectName>/
 
-If the user asks to create a project similar to an existing project:
+---
 
-1. Inspect the existing project.
-2. Determine its project composition.
-3. Determine the structure required for those project components.
-4. Create equivalent components using the new project name.
-5. Apply the new naming convention.
-6. Do not copy legacy project names.
-7. Do not copy unrelated project-specific configuration.
+## 2. Explicit Project Composition
 
-## Target Framework
+If the user explicitly specifies the project components, create only the requested components.
 
-All newly created projects must target:
+Example:
 
-`net8.0`
+"Create a project with Common, Repository and Services"
 
-When using `dotnet new`, explicitly specify:
+creates:
 
-`--framework net8.0`
+<ProjectName>.Common
+<ProjectName>.Repository
+<ProjectName>.Services
 
-Do not allow the installed/latest SDK to select another framework automatically.
+Do not add API unless requested.
 
-## Project Templates
+The same rule applies to any other explicitly requested combination.
 
-Use the appropriate .NET template for each project type.
+---
 
-For an API project, use the ASP.NET Core Web API template.
+## 3. Similar to Existing Project
 
-For class-library based projects, use the .NET class library template.
+If the user asks for a project similar to an existing project:
 
-Refer to:
+1. Locate the existing project.
+2. Inspect its project-level composition.
+3. Identify the project types/components it contains.
+4. Use that composition for the new project.
+5. Replace the existing project name with the requested new project name.
+6. Apply the new project naming convention.
+7. Create the required projects.
+8. Create references between the newly generated projects where applicable.
 
-`references/project-creation.md`
+Do not copy the existing project's project names.
 
-for the project creation commands and structure.
+Do not copy unrelated project references.
 
-## Project Structure
+Do not copy project-specific business implementation.
 
-Project creation must generate the required structural folders and files for the selected project components.
+Do not copy project-specific package dependencies unless they are explicitly required for the requested structure.
 
-The generated structure should follow the established NYBOSS conventions.
+---
 
-Do not generate unnecessary folders or files.
+# Naming Convention
 
-## Project Contents
+All newly generated project names must follow:
 
-When a project component requires standard files or folders, create them as part of project creation.
+<ProjectName>.<Component>
 
-For example, an API project may require:
+Examples:
 
-- Controllers
-- Properties
-- launchSettings.json
-- appsettings.json
-- appsettings.Development.json
-- appsettings.Local.json
-- build-info.json
-- Program.cs
-- project file
+<ProjectName>.API
+<ProjectName>.Common
+<ProjectName>.Repository
+<ProjectName>.Services
 
-Other project types should receive the structural files appropriate to their purpose.
+Do not add legacy organizational prefixes to newly generated project names.
 
-Do not invent business-specific implementation code.
+The name of the new project must be used consistently in:
 
-## Project References
+- Directory names
+- Project names
+- .csproj names
+- AssemblyName
+- RootNamespace
 
-When multiple components belonging to the same new project are created, references must point to the newly created components.
+unless a specific project type requires another convention.
 
-For example, for a project named `<ProjectName>`:
+---
 
-`<ProjectName>.API` should reference `<ProjectName>.Services`.
+# Target Framework
 
-`<ProjectName>.Services` should reference `<ProjectName>.Common` and `<ProjectName>.Repository`.
+All newly created NYBOSS projects must target:
 
-`<ProjectName>.Repository` should reference `<ProjectName>.Common`.
+net8.0
 
-Do not reference an existing project's equivalent component.
+Use the .NET 8 framework explicitly when creating projects.
 
-Do not automatically add unrelated external NYBOSS project references.
+Do not allow the installed/latest SDK to select another target framework automatically.
 
-External project references should only be added when explicitly requested.
+Every generated project must contain:
 
-## Solution
+<TargetFramework>net8.0</TargetFramework>
 
-Use the existing solution:
+unless the user explicitly requests another framework.
 
-`BNPP.NYBOSS.NextGen.Server.sln`
+---
 
-All newly created projects must be added to this solution.
+# Project Creation Tools
 
-Do not create a separate solution for the new project.
+Use the .NET CLI to create projects.
 
-## .NET CLI
+Use the appropriate `dotnet new` template for each project type.
 
-Use the .NET CLI for project creation and solution management.
+Use:
 
-API:
+dotnet sln <solution> add <project>
 
-`dotnet new webapi --framework net8.0 --name <ProjectName>.API`
+to add projects to the existing solution.
 
-Class library:
+Use:
 
-`dotnet new classlib --framework net8.0 --name <ProjectName>.<Component>`
+dotnet add <project> reference <referenced-project>
 
-Add project to solution:
+for project-to-project references.
 
-`dotnet sln <solution> add <project>`
+OpenCode should use its shell capabilities to execute the required .NET CLI commands.
 
-Add a project reference:
+---
 
-`dotnet add <project> reference <referenced-project>`
+# Default Project Types
 
-Use references only when required by the generated project structure or explicitly requested by the user.
+For the default project:
 
-## Application Location
+<ProjectName>.API
 
-Business applications are normally created under:
+is an ASP.NET Core Web API project.
 
-`Apps/Business/`
+The following are class-library projects:
 
-Core applications are normally created under:
+<ProjectName>.Common
+<ProjectName>.Repository
+<ProjectName>.Services
 
-`Apps/Core/`
+All projects target net8.0.
 
-If the user explicitly specifies another location, follow the user's request.
+---
 
-For an unspecified Business project, use:
+# Project References
 
-`Apps/Business/<ProjectName>/`
+When multiple components are created for the same new project, references must be between those newly created components.
 
-## Validation
+For example, if the new project is `<ProjectName>`:
 
-After creating a project, verify:
+<ProjectName>.API
+    -> <ProjectName>.Services
 
-1. All requested project components were created.
-2. Every generated project targets `net8.0`.
-3. Project names follow `<ProjectName>.<Component>`.
-4. Required structural files and folders exist.
+<ProjectName>.Services
+    -> <ProjectName>.Common
+    -> <ProjectName>.Repository
+
+<ProjectName>.Repository
+    -> <ProjectName>.Common
+
+Do not reference an existing application's equivalent project.
+
+Do not add unrelated external project references automatically.
+
+If the user explicitly requests an external project reference, handle that request separately.
+
+---
+
+# Solution
+
+Use the existing:
+
+BNPP.NYBOSS.NextGen.Server.sln
+
+Do not create a new solution.
+
+Every newly generated project must be added to the existing solution.
+
+---
+
+# Project Contents
+
+When creating a project, generate the complete project structure required by the selected project type.
+
+This includes the project file and the standard files created by the selected .NET template.
+
+For an API project, use the appropriate ASP.NET Core Web API template.
+
+For class-library projects, use the appropriate class-library template.
+
+Do not generate NYBOSS business-specific implementation unless the user requests it.
+
+---
+
+# Existing Project Structure
+
+Existing NYBOSS projects are used as references for understanding project composition and conventions.
+
+Do not assume that all existing projects have the same structure.
+
+Do not treat any one existing project as the universal template.
+
+When the user explicitly asks for a project similar to an existing project, use that project's composition as the requested pattern.
+
+When the user asks for a simple/default project, use the default:
+
+API
+Common
+Repository
+Services
+
+---
+
+# Validation
+
+Before completing a project creation request, verify:
+
+1. The requested project was created in the correct location.
+2. All required project components were created.
+3. Project names follow the new naming convention.
+4. All generated projects target net8.0.
 5. All generated projects are added to the existing solution.
-6. Internal references point to the newly created project's components.
+6. Required references between generated components are present.
 7. No unintended external project references were added.
-8. No unnecessary project components were created.
+8. The generated project files are valid.
+9. The solution remains valid.
