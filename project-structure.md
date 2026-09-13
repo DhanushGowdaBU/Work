@@ -4,7 +4,13 @@ The NYBOSS server repository contains multiple applications and project types.
 
 Project composition can vary depending on application purpose.
 
-## Business Applications
+This document defines the expected project and directory structure.
+
+It does not define application implementation.
+
+---
+
+# Business Applications
 
 Business applications are normally located under:
 
@@ -19,7 +25,7 @@ The default Business project contains:
 
 ---
 
-## Default API Structure
+# Default API Structure
 
 <ProjectName>.API/
 ├── Controllers/
@@ -31,9 +37,13 @@ The default Business project contains:
 ├── <ProjectName>.API.csproj
 └── Program.cs
 
+These entries describe the expected structure.
+
+Do not copy the contents of these files from another application during project creation.
+
 ---
 
-## Default Common Structure
+# Default Common Structure
 
 <ProjectName>.Common/
 ├── Constants/
@@ -45,29 +55,66 @@ The default Business project contains:
 ├── GlobalUsings.cs
 └── <ProjectName>.Common.csproj
 
+Create the folders and files as structural elements.
+
+Do not populate business-specific content during project creation.
+
 ---
 
-## Default Repository Structure
+# Default Repository Structure
 
 <ProjectName>.Repository/
 ├── RegisterServices.cs
 └── <ProjectName>.Repository.csproj
 
-Additional repository implementation files are created when requested.
+Additional repository files are created only when required by the user's request or by a similar-project structure.
+
+Do not copy repository implementations from another application.
 
 ---
 
-## Default Services Structure
+# Default Services Structure
 
 <ProjectName>.Services/
 ├── RegisterServices.cs
 └── <ProjectName>.Services.csproj
 
-Additional service implementation files are created when requested.
+Additional service files are created only when required by the user's request or by a similar-project structure.
+
+Do not copy service implementations from another application.
 
 ---
 
-## Project Naming
+# Similar Project Structure
+
+When the user asks for a project similar to an existing project, inspect the existing project structure.
+
+Use it to determine:
+
+- project composition
+- folder hierarchy
+- file hierarchy
+- project relationships
+
+Recreate the structure for the new project.
+
+Do not copy file contents.
+
+Do not copy implementation.
+
+Do not copy business logic.
+
+Do not copy configuration values.
+
+Do not copy secrets.
+
+Do not copy application-specific settings.
+
+The existing project is a structural reference only.
+
+---
+
+# Project Naming
 
 New projects use:
 
@@ -84,7 +131,7 @@ Do not add legacy organizational prefixes to newly generated projects.
 
 ---
 
-## Target Framework
+# Target Framework
 
 New projects target:
 
@@ -94,30 +141,7 @@ unless the user explicitly requests another framework.
 
 ---
 
-## Existing Project Pattern
-
-When a user asks for a project similar to an existing project, inspect the existing project structure.
-
-The generated project should reproduce:
-
-- applicable project components
-- applicable folders
-- applicable structural files
-- applicable project configuration
-
-The new project name must be applied consistently.
-
-Do not blindly copy:
-
-- legacy project names
-- unrelated external references
-- unrelated packages
-- business-specific implementation
-- application-specific configuration
-
----
-
-## Solution
+# Solution
 
 The existing solution is:
 
