@@ -1,6 +1,6 @@
 ---
 name: dotnet-developer
-description: Create and modify NYBOSS .NET 8 server modules and projects using the repository's project structure, conventions, and .NET CLI tooling.
+description: Create and modify NYBOSS .NET server projects using the repository's project structure, conventions, and .NET 8 tooling.
 license: MIT
 metadata:
   author: Copyright 2026 Google LLC
@@ -9,154 +9,729 @@ metadata:
 
 # NYBOSS .NET Developer
 
-Use this skill when the user asks to create or modify a NYBOSS .NET server module or project.
+Use this skill when the user asks to create or modify a NYBOSS .NET server project.
 
 Read the relevant reference files before performing the requested operation.
 
-The current phase covers:
-
-- module creation
-- project creation
-- project folders
-- project files
-- structural source files
-- `.csproj` files
-- project naming
-- project configuration
-- solution entries
-
-The current phase does not implement application business functionality.
-
 ---
 
-# Application Areas
+# Project Creation
 
-NYBOSS server code is organized into three application areas:
+There are four supported creation concepts:
+
+1. Default project
+2. Explicit project composition
+3. Project similar to an existing project
+4. Module creation
+
+Projects and modules may belong to:
 
 - Business
 - Core
 - Infrastructure
 
+Determine:
+
+- application area
+- project or module
+- project name
+- module name, if provided
+- creation mode
+- requested components, if provided
+
+from the user's request.
+
+The current project-creation phase creates only:
+
+- project directories
+- project files
+- folders
+- structural source files
+- `.csproj` files
+- solution entries
+- project-to-project references where already defined by the Business/Core rules
+
+This phase does not implement business functionality.
+
+---
+
+# Project vs Module
+
+A project and a module are different concepts.
+
+## Project
+
+A project is an individual `.csproj` project.
+
+For example:
+
+<ProjectName>.API
+
+<ProjectName>.Common
+
+<ProjectName>.Repository
+
+<ProjectName>.Services
+
+If the user says:
+
+"Create <ProjectName> project"
+
+interpret this as a request for the default project composition for the selected application area.
+
+If the user says:
+
+"Create <ProjectName>.API project"
+
+create only:
+
+<ProjectName>.API
+
+Do not create the other components.
+
+---
+
+## Module
+
+A module is a logical container containing one or more related projects.
+
+For example:
+
+Apps/Business/<ModuleName>/
+
+or:
+
+Apps/Core/<ModuleName>/
+
+or:
+
+Infrastructure/<ModuleName>/
+
+A module may contain multiple projects.
+
+If the user explicitly says "module", create the module directory and the projects belonging to that module according to the selected application area and module type.
+
+Do not interpret "module" as a single `.csproj` unless the requested module definition contains only one project.
+
+---
+
+# Project Name and Module Name
+
+The user may:
+
+- specify only a project name
+- specify only a module name
+- specify both
+- specify a project component directly
+
+Examples:
+
+"Create <ProjectName> project"
+
+"Create <ModuleName> module"
+
+"Create <ProjectName> project inside <ModuleName> module"
+
+"Create <ProjectName>.API project"
+
+"Create <ModuleName> module with API, Common and Services"
+
+Determine the requested structure from the wording.
+
+If a module is explicitly provided, place the generated projects under that module.
+
+If no module is provided, use the normal application-area location.
+
+Do not invent an additional module directory when the user did not request one.
+
+---
+
+# Application Areas
+
+NYBOSS server projects are organized into:
+
+- Business
+- Core
+- Infrastructure
+
+---
+
+# Business
+
 Business projects are located under:
 
 Apps/Business/
+
+The default Business project composition is:
+
+<ProjectName>.API
+<ProjectName>.Common
+<ProjectName>.Repository
+<ProjectName>.Services
+
+A Business module uses the same default composition unless the user explicitly requests another composition.
+
+Example:
+
+Apps/Business/<ModuleName>/
+
+with:
+
+<ProjectName>.API
+<ProjectName>.Common
+<ProjectName>.Repository
+<ProjectName>.Services
+
+The module name and project name may be the same when the user requests a module without separately specifying a project name.
+
+---
+
+# Core
 
 Core projects are located under:
 
 Apps/Core/
 
-Infrastructure projects and modules are located under:
+The default Core project composition is:
 
-Infrastructure/
+<ProjectName>.API
+<ProjectName>.Domain
+<ProjectName>.Repository
+<ProjectName>.Services
 
-Determine the application area from the user's request.
+A Core module uses the same default composition unless the user explicitly requests another composition.
 
-If the user explicitly specifies an application area, use it.
+Example:
 
-Examples:
+Apps/Core/<ModuleName>/
 
-- "Create a Business Customer project"
-- "Create a Core Configuration project"
-- "Create an Infrastructure Storage project"
+with:
 
-If the application area is not explicitly stated, use the wording and requested project/module type to determine the most appropriate area.
+<ProjectName>.API
+<ProjectName>.Domain
+<ProjectName>.Repository
+<ProjectName>.Services
 
-Do not place a project in multiple application areas.
+Domain and Common are different project types.
+
+Do not replace Domain with Common for Core projects.
+
+Do not assume that Domain and Common contain the same structure or responsibilities.
 
 ---
 
-# Module and Project Concepts
+# Infrastructure
 
-A module is a logical container/folder that can contain one or more projects.
+Infrastructure projects are located under:
 
-A project is an actual .NET project containing a `.csproj` file.
+Infrastructure/
 
-A module and a project are not the same thing.
+Infrastructure does not have one universal project composition.
+
+Infrastructure contains both:
+
+1. Multi-project modules
+2. Standalone infrastructure projects
+
+Examples of Infrastructure module categories found in the repository include:
+
+- API client modules
+- service modules
+- message-processing modules
+- watcher modules
+- notification modules
+- transport modules
+
+Examples of standalone infrastructure projects include:
+
+- API host projects
+- API infrastructure projects
+- common infrastructure projects
+- executable host projects
+- data access projects
+- logging projects
+- repository projects
+- service host projects
+- storage projects
+
+Do not assume that every Infrastructure module uses the same project composition.
+
+Use the known Infrastructure module templates defined in:
+
+references/project-creation.md
+
+and:
+
+references/project-structure.md
+
+If the requested Infrastructure module matches a known module type, use that module template.
+
+If the user explicitly specifies components, create only those components.
+
+If the requested Infrastructure structure cannot be determined from the known module types or explicit components, do not invent an architecture.
+
+---
+
+# Structure and Generated Content Rules
+
+The current project creation stage creates the project skeleton.
+
+There are two types of generated files.
+
+## 1. CLI-generated files
+
+When a file is generated by a .NET CLI template, keep its generated content.
+
+Examples include:
+
+- Program.cs
+- `.csproj`
+- `launchSettings.json`
+- template-generated `appsettings` files
+- other files created by `dotnet new`
+
+Do not:
+
+- empty these files
+- replace their content
+- overwrite their content with placeholders
+- copy content from another application
+
+The content generated by the .NET template must remain intact.
+
+Only make changes required by the project-generation rules, such as:
+
+- target framework
+- project references
+- project naming
+- required project configuration
+
+---
+
+## 2. NYBOSS structural files
+
+When additional files are required to represent the NYBOSS project structure, create them with minimal, valid, project-specific skeleton content.
+
+These files provide the initial project structure only.
+
+Do not implement business functionality in them.
+
+---
+
+# Do Not Copy Existing Implementation
+
+Do not copy implementation from existing applications during normal project creation.
+
+Do not copy:
+
+- business logic
+- controller implementations
+- service implementations
+- repository implementations
+- domain implementations
+- handler implementations
+- model implementations
+- configuration values
+- connection strings
+- secrets
+- application data
+- application-specific settings
+
+For a similar-project request, existing projects are structural references only.
+
+---
+
+# 1. Default Project
+
+Determine whether the user requested a Business, Core, or Infrastructure project.
+
+---
+
+## Default Business Project
+
+If the user asks:
+
+"Create <ProjectName> project"
+
+and the selected application area is Business, create:
+
+<ProjectName>.API
+<ProjectName>.Common
+<ProjectName>.Repository
+<ProjectName>.Services
+
+under:
+
+Apps/Business/<ProjectName>/
+
+If the user says:
+
+"Create <ProjectName> module"
+
+and the selected application area is Business, create:
+
+Apps/Business/<ProjectName>/
+
+containing the default Business composition:
+
+<ProjectName>.API
+<ProjectName>.Common
+<ProjectName>.Repository
+<ProjectName>.Services
+
+Use:
+
+references/project-creation.md
+
+and:
+
+references/project-structure.md
+
+to determine the required structure.
+
+---
+
+## Default Core Project
+
+If the user asks:
+
+"Create <ProjectName> project"
+
+and the selected application area is Core, create:
+
+<ProjectName>.API
+<ProjectName>.Domain
+<ProjectName>.Repository
+<ProjectName>.Services
+
+under:
+
+Apps/Core/<ProjectName>/
+
+If the user says:
+
+"Create <ProjectName> module"
+
+and the selected application area is Core, create:
+
+Apps/Core/<ProjectName>/
+
+containing:
+
+<ProjectName>.API
+<ProjectName>.Domain
+<ProjectName>.Repository
+<ProjectName>.Services
+
+Use:
+
+references/project-creation.md
+
+and:
+
+references/project-structure.md
+
+to determine the required structure.
+
+---
+
+## Default Infrastructure Project
+
+Infrastructure does not have one universal default project composition.
+
+If the user says:
+
+"Create <ProjectName> project"
+
+for Infrastructure, treat <ProjectName> as an individual Infrastructure project unless the user identifies a known Infrastructure module type.
+
+Create the project using the appropriate .NET 8 template and do not invent additional projects.
+
+---
+
+# 2. Explicit Project Composition
+
+If the user explicitly specifies project components, create only the requested components.
+
+Do not automatically add missing components.
+
+---
+
+## Business
+
+For:
+
+"Create <ProjectName> project with API, Common and Services"
+
+create:
+
+<ProjectName>.API
+<ProjectName>.Common
+<ProjectName>.Services
+
+under:
+
+Apps/Business/<ProjectName>/
+
+Do not create Repository.
+
+---
+
+## Core
+
+For:
+
+"Create <ProjectName> project with API, Domain and Services"
+
+create:
+
+<ProjectName>.API
+<ProjectName>.Domain
+<ProjectName>.Services
+
+under:
+
+Apps/Core/<ProjectName>/
+
+Do not create Repository.
+
+---
+
+## Infrastructure
+
+For:
+
+"Create <ModuleName> module with Common, Repository and Services"
+
+create:
+
+<ModuleName>.Common
+<ModuleName>.Repository
+<ModuleName>.Services
+
+under:
+
+Infrastructure/<ModuleName>/
+
+Create only the explicitly requested components.
+
+---
+
+# Direct Component Project Creation
+
+If the user names a component as part of the project name, create only that project.
 
 For example:
 
-Apps/Business/Customer/
+"Create <ProjectName>.API project"
 
-is a module.
+creates only:
 
-Inside it:
+<ProjectName>.API
 
-Customer.API/
-Customer.Common/
-Customer.Repository/
-Customer.Services/
+Do not create:
 
-are projects.
+<ProjectName>.Common
+<ProjectName>.Repository
+<ProjectName>.Services
+
+or any other project.
+
+Similarly:
+
+"Create <ProjectName>.Repository project"
+
+creates only:
+
+<ProjectName>.Repository
+
+---
+
+# 3. Similar to an Existing Project
+
+If the user asks for a project similar to an existing project:
+
+1. Locate the existing project.
+2. Determine whether it is Business, Core, or Infrastructure.
+3. Determine whether it belongs to a module.
+4. Determine its project composition.
+5. Determine project types.
+6. Inspect the project directory structure.
+7. Inspect folder names.
+8. Inspect file names.
+9. Determine applicable project-to-project relationships where required.
+10. Create equivalent projects under the appropriate application area.
+11. Recreate the applicable folder hierarchy.
+12. Recreate the applicable file hierarchy.
+13. Rename project-specific names to the new project name.
+14. Apply the new naming convention.
+15. Recreate applicable internal project references using the new project names where the existing Business/Core rules require them.
+16. Add generated projects to the existing solution.
+
+The existing project is a STRUCTURAL REFERENCE ONLY.
 
 ---
 
 # Module Creation
 
-The user may explicitly request only a module.
+Module creation is supported in:
 
-Examples:
+- Business
+- Core
+- Infrastructure
 
-- "Create a Customer module"
-- "Create an Order module in Business"
-- "Create a Configuration module in Core"
-- "Create a Storage module in Infrastructure"
+A module is a container for one or more projects.
 
-When the user requests only a module:
+---
 
-1. Create the appropriate module directory.
-2. Do not create any projects automatically.
-3. Do not create `.csproj` files.
-4. Do not create project-specific source files.
-5. Do not create default Business/Core components.
-6. Do not infer a project composition.
+## Business Module
 
-For example:
+Default Business module:
 
-"Create a Customer module in Business"
+Apps/Business/<ModuleName>/
 
-creates:
+contains:
 
-Apps/Business/Customer/
+<ModuleName>.API
+<ModuleName>.Common
+<ModuleName>.Repository
+<ModuleName>.Services
 
-and nothing else.
+The user may explicitly specify another composition.
+
+---
+
+## Core Module
+
+Default Core module:
+
+Apps/Core/<ModuleName>/
+
+contains:
+
+<ModuleName>.API
+<ModuleName>.Domain
+<ModuleName>.Repository
+<ModuleName>.Services
+
+The user may explicitly specify another composition.
+
+---
+
+## Infrastructure Module
+
+Infrastructure module composition depends on the module type.
+
+Known Infrastructure module types are defined in:
+
+references/project-creation.md
+
+and:
+
+references/project-structure.md
+
+Do not force Business/Core project composition onto Infrastructure.
+
+Do not assume every Infrastructure module contains Common, Repository and Services.
 
 ---
 
 # Module Naming
 
-New module names must use the user-requested logical module name.
+A module directory is not itself a `.csproj` project.
 
-Do not add legacy organizational prefixes.
+For a module:
 
-For example:
+<ModuleName>/
 
-Customer
+contains one or more projects.
 
-Order
+New project names must use the new naming convention.
 
-Configuration
+Examples:
 
-Storage
+<ModuleName>.API
+<ModuleName>.Common
+<ModuleName>.Domain
+<ModuleName>.Repository
+<ModuleName>.Services
 
-are valid new module names.
+Do not add:
 
-Do not automatically create:
+BNPP.NYBOSS.
 
-BNPP.NYBOSS.Customer
-BNPP.NYBOSS.Order
-BNPP.NYBOSS.Configuration
-
-for new modules.
-
-Existing legacy module names are reference structures only.
+or another legacy organizational prefix to newly created projects.
 
 ---
 
-# Project Naming
+# Similar Project Inspection Rules
+
+For a similar-project request, inspect only information required to determine structure.
+
+Allowed information includes:
+
+- project names
+- project types
+- project directories
+- module directories
+- folder names
+- subfolder names
+- file names
+- file locations
+- project-to-project relationships
+- project metadata required to determine project type
+
+Do not inspect source files for the purpose of copying their implementation.
+
+Do not copy:
+
+- source-code implementation
+- class implementation
+- method implementation
+- business logic
+- controller implementation
+- service implementation
+- repository implementation
+- domain implementation
+- handler implementation
+- model implementation
+- configuration values
+- connection strings
+- secrets
+- application-specific settings
+- application data
+- business-specific JSON content
+- business-specific XML content
+
+---
+
+# Similar Project File Handling
+
+If the reference project contains:
+
+<Folder>/<File>
+
+create the corresponding folder and file in the new project.
+
+Reproduce:
+
+- file name
+- file location
+- file type
+
+Do not reproduce the reference file's implementation.
+
+If the new project is created using a .NET CLI template and the CLI generates a file with the same name, keep the CLI-generated content.
+
+If the file is a structural file created specifically by the generator, create minimal valid project-specific skeleton content.
+
+---
+
+# Naming Convention
 
 All newly generated projects must use the new NYBOSS naming convention.
 
-The base format is:
+The general format is:
 
 <ProjectName>.<Component>
 
@@ -167,542 +742,66 @@ Examples:
 <ProjectName>.Domain
 <ProjectName>.Repository
 <ProjectName>.Services
-<ProjectName>.ServiceHost
-<ProjectName>.SDK
+
+The same rule applies to newly generated Infrastructure projects.
 
 Do not add legacy organizational prefixes.
 
-Do not create new projects using names such as:
+For example, do not create new projects named:
 
-BNPP.NYBOSS.Customer.API
-BNPP.NYBOSS.Configuration.Domain
-BNPP.NYBOSS.Storage
+BNPP.NYBOSS.<ProjectName>.<Component>
 
-unless the user explicitly requires that exact legacy name.
-
-The new naming convention applies to:
-
-- Business projects
-- Core projects
-- Infrastructure projects
-- projects inside modules
-- standalone projects
-- projects created from similar-project requests
-
-When a module is specified, the module name is represented by the directory hierarchy, not by adding an unnecessary organizational prefix to the project name.
-
-For example:
-
-Apps/Business/Customer/
-
-contains:
-
-Customer.API
-Customer.Common
-Customer.Repository
-Customer.Services
+Existing legacy names are reference structures only.
 
 ---
 
-# Project Name vs Module Name
+# Project and Module Naming
 
-The user may provide:
-
-- only a project name
-- only a module name
-- both a module and project name
-
-Interpret the request carefully.
-
-## Project only
-
-"Create a Customer project"
-
-means:
-
-Module = Customer
-
-Projects = default projects for the selected application area.
-
-For Business:
-
-Apps/Business/Customer/
-
-with:
-
-Customer.API
-Customer.Common
-Customer.Repository
-Customer.Services
-
-For Core:
-
-Apps/Core/Customer/
-
-with:
-
-Customer.API
-Customer.Domain
-Customer.Repository
-Customer.Services
-
----
-
-## Project with explicit component
-
-"Create a Customer API project"
-
-means:
-
-Project = Customer.API
-
-Create only:
-
-Apps/Business/Customer/Customer.API/
-
-Do not create:
-
-Customer.Common
-Customer.Repository
-Customer.Services
-
-unless explicitly requested.
-
-Likewise:
-
-"Create a Customer Repository project"
-
-creates only:
-
-Customer.Repository
-
----
-
-## Project with explicit module
-
-If the user says:
-
-"Create Customer project in Order module"
-
-create:
-
-Apps/Business/Order/Customer/
-
-with the default Business project composition.
-
-The projects are:
-
-Order/
-└── Customer/
-    ├── Customer.API/
-    ├── Customer.Common/
-    ├── Customer.Repository/
-    └── Customer.Services/
-
-The module name does not become a legacy project prefix.
-
----
-
-## Explicit module and component
-
-If the user says:
-
-"Create Customer API project in Order module"
-
-create only:
-
-Apps/Business/Order/Customer/Customer.API/
-
-Do not create other Customer projects.
-
----
-
-# Project Creation Modes
-
-There are four supported project/module creation modes:
-
-1. Module-only creation
-2. Default project creation
-3. Explicit project composition
-4. Similar-project creation
-
-Determine the mode from the user's wording.
-
----
-
-# 1. Module-Only Creation
-
-If the user explicitly asks to create a module and does not request a project:
-
-create only the module directory.
-
-Example:
-
-"Create Customer module"
-
-Business:
-
-Apps/Business/Customer/
-
-Core:
-
-Apps/Core/Customer/
-
-Infrastructure:
-
-Infrastructure/Customer/
-
-Do not create projects automatically.
-
----
-
-# 2. Default Project Creation
-
-A default project request means the user wants the normal project composition for the selected application area.
+Use the requested name as the base name.
 
 Examples:
 
-- "Create a Customer project"
-- "Create a simple Customer project"
-- "Create a basic Customer project"
-- "Create a normal Customer project"
-- "Create a standard Customer project"
-- "Create a regular Customer project"
-- "Create a default Customer project"
-
-Do not interpret a component word such as API, Repository, Services, Domain, Common or ServiceHost as a default project request.
-
-If the user explicitly names a component, create only that project unless multiple components are explicitly requested.
-
----
-
-# Default Business Project
-
-For a default Business project create:
+<ProjectName>
 
 <ProjectName>.API
-<ProjectName>.Common
-<ProjectName>.Repository
-<ProjectName>.Services
-
-under:
-
-Apps/Business/<Module>/<ProjectName>/
-
-If no separate module is specified, use the project name as the module:
-
-Apps/Business/<ProjectName>/
-
-For example:
-
-"Create Customer project"
-
-creates:
-
-Apps/Business/Customer/
-├── Customer.API/
-├── Customer.Common/
-├── Customer.Repository/
-└── Customer.Services/
-
----
-
-# Default Core Project
-
-For a default Core project create:
-
-<ProjectName>.API
-<ProjectName>.Domain
-<ProjectName>.Repository
-<ProjectName>.Services
-
-under:
-
-Apps/Core/<Module>/<ProjectName>/
-
-If no separate module is specified, use the project name as the module:
-
-Apps/Core/<ProjectName>/
-
-For example:
-
-"Create Configuration project in Core"
-
-creates:
-
-Apps/Core/Configuration/
-├── Configuration.API/
-├── Configuration.Domain/
-├── Configuration.Repository/
-└── Configuration.Services/
-
----
-
-# Infrastructure Project Creation
-
-Infrastructure does not have one universal project composition.
-
-Existing Infrastructure contains different types of projects and modules.
-
-Examples include:
-
-- API clients
-- service modules
-- watchers
-- messaging components
-- notification components
-- transport components
-- host projects
-- common libraries
-- data-access libraries
-- logging libraries
-- storage libraries
-
-Do not invent a universal Infrastructure composition.
-
-For Infrastructure, project structure is determined by:
-
-1. Explicit user requirements, or
-2. An existing Infrastructure project/module used as a structural reference.
-
----
-
-# Infrastructure Explicit Project
-
-If the user explicitly requests an Infrastructure project:
-
-create the requested project using the .NET 8 appropriate template.
-
-Example:
-
-"Create Storage project in Infrastructure"
-
-creates:
-
-Infrastructure/Storage/
-
-with:
-
-Storage.csproj
-
-Do not automatically create:
-
-Storage.Common
-Storage.Repository
-Storage.Services
-
-unless requested.
-
----
-
-# Infrastructure Explicit Components
-
-If the user specifies components:
-
-"Create EmailWatcher with Common, Repository and Services in Infrastructure"
-
-create:
-
-Infrastructure/EmailWatcher/
-├── EmailWatcher.Common/
-├── EmailWatcher.Repository/
-└── EmailWatcher.Services/
-
-Create only the requested projects.
-
-Do not add ServiceHost unless explicitly requested.
-
-For example:
-
-"Create EmailWatcher with Common, Repository, Services and ServiceHost"
-
-creates:
-
-Infrastructure/EmailWatcher/
-├── EmailWatcher.Common/
-├── EmailWatcher.Repository/
-├── EmailWatcher.ServiceHost/
-└── EmailWatcher.Services/
-
----
-
-# Infrastructure Module Creation
-
-If the user requests only an Infrastructure module:
-
-"Create FileWatcher module in Infrastructure"
-
-create:
-
-Infrastructure/FileWatcher/
-
-Do not create projects automatically.
-
----
-
-# Infrastructure Similar Project
-
-If the user requests an Infrastructure project similar to an existing Infrastructure project:
-
-1. Locate the reference project.
-2. Inspect its project type.
-3. Inspect its directory structure.
-4. Inspect its folders.
-5. Inspect its subfolders.
-6. Inspect its file names.
-7. Inspect its project metadata needed to determine the project type.
-8. Recreate the applicable structure using the new project name.
-9. Apply the new naming convention.
-10. Do not copy implementation.
-
-Example:
-
-If the existing project is:
-
-Infrastructure/BNPP.NYBOSS.Storage/
-
-with:
-
-Options/
-GlobalAssemblyInfo.cs
-IS3FileManager.cs
-RegisterServices.cs
-S3FileManager.cs
-
-and the user requests:
-
-"Create FileStorage similar to BNPP.NYBOSS.Storage"
-
-create:
-
-Infrastructure/FileStorage/
-
-with the equivalent structural files renamed where appropriate.
-
-Do not copy the implementation from Storage.
-
----
-
-# Infrastructure Similar Module
-
-If the user requests:
-
-"Create a new Infrastructure module similar to CurrencyService"
-
-inspect the entire module structure.
-
-For example:
-
-Infrastructure/CurrencyService/
-
-may contain:
-
-CurrencyService.Common/
-CurrencyService.Repository/
-CurrencyService.Services/
-
-Recreate the applicable structure for the new module.
-
-Do not assume every Infrastructure module has the same composition.
-
----
-
-# Similar Project Rules
-
-Existing projects are structural references only.
-
-Similar-project creation means:
-
-STRUCTURE SIMILARITY
-
-not:
-
-CONTENT COPYING
-
-Inspect only information needed to determine structure.
-
-Allowed:
-
-- project names
-- project type
-- project directories
-- folder names
-- subfolder names
-- file names
-- file locations
-- project metadata required to determine project type
-- project-to-project relationships when needed to reproduce structure
-
-Do not copy:
-
-- business logic
-- source-code implementation
-- controller implementation
-- service implementation
-- repository implementation
-- domain implementation
-- handler implementation
-- model implementation
-- configuration values
-- connection strings
-- secrets
-- application data
-- business-specific JSON
-- business-specific XML
-- unrelated dependencies
-- application-specific settings
-
----
-
-# Similar Project Naming
-
-When recreating a similar project:
-
-1. Preserve the structural component type.
-2. Replace reference project-specific names with the new project name.
-3. Do not preserve legacy organizational prefixes.
-4. Apply the new naming convention to newly created projects.
-5. Preserve the directory/module organization where applicable.
-
-Example:
-
-Existing:
-
-BNPP.NYBOSS.Configuration.Domain
-
-New:
-
-Configuration.Domain
-
-Existing:
-
-BNPP.NYBOSS.Configuration.Repository
-
-New:
-
-Configuration.Repository
-
-Existing:
-
-BNPP.NYBOSS.Configuration.Services
-
-New:
-
-Configuration.Services
-
----
-
-# Domain and Common
-
-Common and Domain are separate project types.
-
-Business uses:
 
 <ProjectName>.Common
 
-Core uses:
+<ProjectName>.Repository
+
+<ProjectName>.Services
+
+For module-based creation:
+
+<ModuleName>/
+
+<ModuleName>.API
+
+<ModuleName>.Common
+
+<ModuleName>.Repository
+
+<ModuleName>.Services
+
+Do not introduce underscores, organizational prefixes, or additional naming segments unless the user explicitly requests them or the selected structure requires them.
+
+---
+
+# Common and Domain Rule
+
+Common and Domain are separate concepts.
+
+For Business projects:
+
+<ProjectName>.Common
+
+is the shared Common project.
+
+For Core projects:
 
 <ProjectName>.Domain
+
+is the domain project.
 
 Do not automatically convert:
 
@@ -712,341 +811,75 @@ or:
 
 Domain -> Common
 
-When creating a similar project, preserve the reference project's component type.
+when creating projects.
+
+When creating a similar project, preserve the component type of the reference project unless the user explicitly requests a different composition.
 
 ---
 
 # Target Framework
 
-All newly generated NYBOSS projects must target:
+All newly created NYBOSS projects must target:
 
 net8.0
 
-.NET 8 is the standard framework for the NYBOSS server repository.
+Use .NET 8 explicitly when creating projects.
 
 Do not allow the latest installed SDK/framework to determine the target framework automatically.
 
-Use:
+Every generated project must contain:
 
---framework net8.0
+<TargetFramework>net8.0</TargetFramework>
 
-when supported by the selected template.
+unless the user explicitly requests another framework.
 
-Every generated project must target net8.0 unless the user explicitly requests another framework.
+This rule applies to:
+
+- Business
+- Core
+- Infrastructure
 
 ---
 
 # Project Creation Tools
 
-Use the .NET CLI for project creation.
+Use the .NET CLI to create .NET projects.
 
-Do not use npm, tsx or an Angular generator for server-side project creation.
-
-Use the .NET CLI appropriate to the project type.
+All newly generated projects must target .NET 8.
 
 ---
 
-# API Projects
+## API Projects
 
-For API projects use the controller-based ASP.NET Core Web API template.
+For API projects, use the controller-based ASP.NET Core Web API template.
 
-Use:
+Use the equivalent of:
 
 dotnet new webapi --framework net8.0 --use-controllers --name <ProjectName>.API
 
-Remove the generated:
+The API project must not retain the template-generated `.http` file.
+
+If the template creates:
 
 <ProjectName>.API.http
 
-file unless the user explicitly requests it.
-
-Do not remove valid CLI-generated files.
+remove that file after project creation.
 
 ---
 
-# Class Library Projects
+## Class Library Projects
 
-For standard class-library projects use:
+For class-library projects use:
 
 dotnet new classlib --framework net8.0 --name <ProjectName>.<Component>
 
-Examples:
-
-dotnet new classlib --framework net8.0 --name Customer.Common
-
-dotnet new classlib --framework net8.0 --name Customer.Domain
-
-dotnet new classlib --framework net8.0 --name Customer.Repository
-
-dotnet new classlib --framework net8.0 --name Customer.Services
-
 ---
 
-# Infrastructure Project Type
+## Other Project Types
 
-Infrastructure projects do not all use the same template.
+If an Infrastructure project requires another .NET project type, determine the appropriate .NET 8 template from the requested project type or the structural reference.
 
-Determine the appropriate .NET project template from:
-
-- explicit user request
-- reference project metadata
-- existing project structure
-
-Do not blindly use Web API or Class Library for every Infrastructure project.
-
-If the project type cannot be determined from the request or reference structure, use the most appropriate standard .NET 8 template based on the project name and purpose.
-
-Do not copy the reference `.csproj`.
-
----
-
-# CLI-Generated File Rule
-
-When `dotnet new` generates a file, retain its generated content.
-
-Examples:
-
-- Program.cs
-- `.csproj`
-- launchSettings.json
-- appsettings.json
-- appsettings.Development.json
-- other valid template-generated files
-
-Do not:
-
-- blank the file
-- replace it with a placeholder
-- recreate it unnecessarily
-- copy implementation from another project
-
-Only modify CLI-generated files when required for:
-
-- net8.0 targeting
-- project naming
-- required project configuration
-- explicitly requested project structure
-
----
-
-# Structural Files
-
-Files created specifically to represent NYBOSS structure may contain minimal valid skeleton code.
-
-Structural files must not contain business implementation.
-
-Examples include:
-
-<ProjectName>Model.cs
-<ProjectName>Constants.cs
-<ProjectName>Options.cs
-I<ProjectName>Repository.cs
-I<ProjectName>Service.cs
-<ProjectName>Repository.cs
-<ProjectName>Service.cs
-
-For Infrastructure, do not assume these files are required.
-
-Create Infrastructure structural files only when:
-
-- explicitly requested, or
-- required by a similar-project structural reference.
-
----
-
-# Empty Folder Rule
-
-A required folder should have a representative file when the development environment or source control would otherwise not represent the folder.
-
-For default Business/Core structures, create the structural files defined in:
-
-references/project-creation.md
-
-and:
-
-references/project-structure.md
-
-For Infrastructure, do not create arbitrary placeholder files merely to populate a folder.
-
-Use the reference project's structure when generating a similar Infrastructure project.
-
----
-
-# Default Business Structure
-
-Default Business:
-
-Apps/Business/<Module>/<ProjectName>/
-
-Projects:
-
-<ProjectName>.API
-<ProjectName>.Common
-<ProjectName>.Repository
-<ProjectName>.Services
-
-If no module is explicitly supplied:
-
-<Module> = <ProjectName>
-
----
-
-# Default Core Structure
-
-Default Core:
-
-Apps/Core/<Module>/<ProjectName>/
-
-Projects:
-
-<ProjectName>.API
-<ProjectName>.Domain
-<ProjectName>.Repository
-<ProjectName>.Services
-
-If no module is explicitly supplied:
-
-<Module> = <ProjectName>
-
----
-
-# Explicit Composition
-
-If the user explicitly specifies project components:
-
-create only those components.
-
-Example:
-
-"Create Customer with API, Common and Services"
-
-creates:
-
-Customer.API
-Customer.Common
-Customer.Services
-
-Do not create:
-
-Customer.Repository
-
-because it was not requested.
-
-Likewise:
-
-"Create Configuration with API, Domain and Services"
-
-creates:
-
-Configuration.API
-Configuration.Domain
-Configuration.Services
-
----
-
-# Single Component Project Requests
-
-If the user names a specific project component, treat it as an explicit single-project request.
-
-Examples:
-
-"Create Customer API project"
-
-creates only:
-
-Customer.API
-
-"Create Customer Common project"
-
-creates only:
-
-Customer.Common
-
-"Create Customer Domain project"
-
-creates only:
-
-Customer.Domain
-
-"Create Customer Repository project"
-
-creates only:
-
-Customer.Repository
-
-"Create Customer Services project"
-
-creates only:
-
-Customer.Services
-
-"Create Customer ServiceHost project"
-
-creates only:
-
-Customer.ServiceHost
-
-Do not create the default project composition in these cases.
-
----
-
-# Project Creation with Module
-
-If a module is explicitly provided, place the project inside that module.
-
-Example:
-
-"Create Customer API project in Order module"
-
-creates:
-
-Apps/Business/Order/Customer/Customer.API/
-
-Example:
-
-"Create Customer project in Order module"
-
-creates:
-
-Apps/Business/Order/Customer/
-├── Customer.API/
-├── Customer.Common/
-├── Customer.Repository/
-└── Customer.Services/
-
-The module name must not be added to the project name unless explicitly requested.
-
----
-
-# Module-Only vs Project Requests
-
-Use the following interpretation:
-
-"Create Customer module"
-
-= module only.
-
-"Create Customer project"
-
-= default project composition.
-
-"Create Customer API project"
-
-= only Customer.API.
-
-"Create Customer project with API and Services"
-
-= only Customer.API and Customer.Services.
-
-"Create Customer project in Order module"
-
-= default Customer project composition inside Order.
-
-"Create Customer module with Customer API project"
-
-= create the Customer module and Customer.API project inside it.
-
-Do not create additional projects unless requested or required by the selected default composition.
+Do not use an arbitrary project template.
 
 ---
 
@@ -1058,7 +891,7 @@ BNPP.NYBOSS.NextGen.Server.sln
 
 Do not create a new solution.
 
-Every newly created .NET project must be added to the existing solution.
+Every newly generated project must be added to the existing solution.
 
 Use:
 
@@ -1066,183 +899,276 @@ dotnet sln BNPP.NYBOSS.NextGen.Server.sln add <project-path>
 
 ---
 
-# Project References
+# Business Project Types
 
-Reference creation is not part of the current Infrastructure phase.
+For the default Business project:
 
-For Business/Core default projects, preserve the currently defined internal project-reference rules.
+<ProjectName>.API
 
-For Infrastructure creation in this phase:
+is an ASP.NET Core Web API project using controllers.
 
-- do not infer references
-- do not copy references from existing projects
-- do not add external references
-- do not modify dependency relationships unless explicitly requested
+The following are class-library projects:
 
-Infrastructure project creation currently focuses on:
+<ProjectName>.Common
+<ProjectName>.Repository
+<ProjectName>.Services
 
-- project creation
-- folders
-- files
-- project configuration
-- solution registration
+All target:
+
+net8.0
 
 ---
 
-# Existing Projects
+# Core Project Types
 
-Existing projects may use legacy names such as:
+For the default Core project:
 
-BNPP.NYBOSS.<ProjectName>.<Component>
+<ProjectName>.API
 
-These names must not be used as the naming convention for new projects.
+is an ASP.NET Core Web API project using controllers.
 
-Existing projects are reference material only.
+The following are class-library projects:
 
-Example:
+<ProjectName>.Domain
+<ProjectName>.Repository
+<ProjectName>.Services
 
-Existing:
+All target:
 
-BNPP.NYBOSS.Configuration.Domain
-
-New:
-
-Configuration.Domain
+net8.0
 
 ---
 
-# Module and Project Directory Rules
+# Default Business Project References
 
-Business:
+When all default Business components are created:
 
-Apps/Business/<Module>/<Project>/
+<ProjectName>.API
+    -> <ProjectName>.Services
 
-Core:
+<ProjectName>.Services
+    -> <ProjectName>.Common
+    -> <ProjectName>.Repository
 
-Apps/Core/<Module>/<Project>/
+<ProjectName>.Repository
+    -> <ProjectName>.Common
 
-Infrastructure:
+References must point to components belonging to the same newly created Business project.
 
-Infrastructure/<Module>/<Project>/
+Do not reference equivalent components belonging to another application.
 
-For standalone Infrastructure projects where there is no logical module:
+---
 
-Infrastructure/<Project>/
+# Default Core Project References
 
-If the user explicitly provides a module, use:
+When all default Core components are created:
 
-Infrastructure/<Module>/<Project>/
+<ProjectName>.API
+    -> <ProjectName>.Services
 
-Do not create an unnecessary additional module directory.
+<ProjectName>.Services
+    -> <ProjectName>.Domain
+    -> <ProjectName>.Repository
+
+<ProjectName>.Repository
+    -> <ProjectName>.Domain
+
+References must point to components belonging to the same newly created Core project.
+
+Do not reference equivalent components belonging to another application.
+
+---
+
+# Explicit Project References
+
+For explicitly requested Business/Core project compositions:
+
+- create only the requested projects
+- add only applicable references
+- do not reference components that were not created
+- do not add unrelated external project references
+
+References must be based on the components that actually exist.
+
+Infrastructure project references are not part of the current Infrastructure creation phase.
+
+Do not add Infrastructure references automatically.
+
+---
+
+# External Project References
+
+Do not automatically add references to existing external NYBOSS projects.
+
+If the user explicitly requests an external project reference, add only the requested reference.
+
+External project references are separate from normal project creation.
 
 ---
 
 # Project Structure Generation
 
-For every requested project:
+For every generated project:
 
-1. Determine application area.
-2. Determine module if supplied.
-3. Determine whether the request is module-only or project creation.
-4. Determine project creation mode.
-5. Determine project components.
-6. Determine project type.
-7. Determine target framework.
-8. Create the required project using the .NET CLI.
-9. Keep valid CLI-generated content.
-10. Remove explicitly unwanted template files.
-11. Create required folders.
-12. Create required structural files.
-13. Apply the new project naming convention.
-14. Add the project to the existing solution.
-15. Validate the generated structure.
+1. Determine the application area.
+2. Determine whether the request is for a project or module.
+3. Determine the requested project name and module name.
+4. Determine the project composition.
+5. Create the project using the appropriate .NET 8 CLI template.
+6. Keep all valid content generated by the CLI template.
+7. Remove unwanted template-generated files explicitly excluded by the NYBOSS structure.
+8. Create required NYBOSS directories.
+9. Create required NYBOSS structural files.
+10. Configure the target framework.
+11. Add applicable Business/Core project references.
+12. Add the project to the existing solution.
+13. Validate the final project structure.
 
-Do not implement business functionality.
+For Infrastructure:
+
+- create only the requested project/module structure
+- do not invent project references
+- do not add Infrastructure dependencies automatically
+
+Do not overwrite valid CLI-generated file content.
 
 ---
 
-# Infrastructure Structure Rule
+# Empty Folder Rule
 
-Infrastructure has no universal default project composition.
+Required structural folders must not remain represented only as empty directories when Visual Studio or source control would not display them.
 
-Do not assume:
+Where a required folder would otherwise be empty, create the appropriate minimal structural file defined in the project structure reference.
 
-Common + Repository + Services
+For Business Common, use project-specific structural files such as:
 
-for every Infrastructure project.
+<ProjectName>Constants.cs
+<ProjectName>Model.cs
+I<ProjectName>Repository.cs
+I<ProjectName>Service.cs
+<ProjectName>Options.cs
 
-Do not assume:
+For Core Domain, use the structural files defined in:
 
-API + Common + Repository + Services
+references/project-creation.md
 
-for every Infrastructure project.
+and:
 
-Do not assume:
+references/project-structure.md
 
-ServiceHost + Services
+For Repository and Services, create:
 
-for every Infrastructure project.
+<ProjectName>Repository.cs
+<ProjectName>Service.cs
 
-Determine Infrastructure structure from:
+For Infrastructure, use the structural files defined by the selected Infrastructure project/module template.
 
-- explicit user request
-- similar-project reference
-- similar-module reference
+These files are structural skeletons only.
+
+Do not implement business functionality in them.
+
+---
+
+# CLI-Generated File Rule
+
+Never blank or replace content that was generated by the .NET CLI.
+
+For example, if `dotnet new` creates:
+
+Program.cs
+
+keep the generated `Program.cs` content.
+
+If `dotnet new` creates:
+
+<ProjectName>.csproj
+
+keep the generated project configuration and modify it only where required to:
+
+- target net8.0
+- add required Business/Core project references
+- apply required project naming
+- apply required project configuration
+
+Do not replace the entire file with an empty or placeholder file.
+
+---
+
+# Template Cleanup
+
+After creating an API project, remove template-generated files that are not part of the required NYBOSS structure.
+
+The default example is:
+
+<ProjectName>.API.http
+
+Do not create or retain this file unless the user explicitly requests it or the structural reference requires it.
+
+Do not remove valid files required by the NYBOSS structure.
 
 ---
 
 # Current Phase Boundary
 
-This phase creates:
+The current phase creates:
 
-- modules
 - projects
-- project directories
+- project configuration
 - folders
 - structural source files
-- `.csproj` files
-- project configuration
+- Business/Core project references where already defined
 - solution entries
 
-This phase does not implement:
+For Infrastructure, this phase focuses only on:
 
-- business logic
-- controller functionality
-- service functionality
-- repository functionality
+- projects
+- project configuration
+- folders
+- structural source files
+- solution entries
+
+Infrastructure project references are intentionally deferred.
+
+The current phase does not implement:
+
+- business functionality
+- application functionality
+- service logic
+- repository logic
 - domain logic
-- Infrastructure implementation
-- integrations
-- database logic
-- external service logic
+- controller functionality
+- Infrastructure functionality
 
-Structural source files must contain only minimal valid skeleton code.
+Structural source files should contain only minimal valid skeleton code.
 
-CLI-generated files must retain their generated content.
+CLI-generated files retain their original generated content.
 
 ---
 
 # Validation
 
-Before completing a request, verify:
+Before completing a project creation request, verify:
 
-1. The correct application area is used.
-2. Module-only requests created only a module.
-3. Project requests created the requested projects.
-4. Default Business projects use API/Common/Repository/Services.
-5. Default Core projects use API/Domain/Repository/Services.
-6. Explicit component requests create only requested projects.
-7. A request such as "Customer API project" creates only Customer.API.
-8. Module names are represented by directory structure.
-9. Project names follow the new naming convention.
-10. Legacy BNPP.NYBOSS prefixes are not introduced into new project names.
-11. All projects target net8.0 unless explicitly overridden.
-12. CLI-generated content is preserved.
-13. Unwanted API `.http` files are removed.
-14. Required folders exist.
-15. Required structural files exist.
-16. Infrastructure does not receive an invented default composition.
-17. Similar-project generation reproduces structure without copying implementation.
-18. Projects are added to the existing solution.
-19. No business functionality is generated.
-20. The solution remains valid.
+1. The requested project or module exists.
+2. The correct application area is used.
+3. The requested project components exist.
+4. Required folders exist.
+5. Required structural files exist.
+6. CLI-generated files retain their generated content unless a specific project configuration change was required.
+7. No unwanted `.http` API file remains.
+8. Project names follow the new naming convention.
+9. No new legacy `BNPP.NYBOSS.*` project name was introduced.
+10. Business projects use Common where Common was requested.
+11. Core projects use Domain where Domain was requested.
+12. Common and Domain were not incorrectly treated as interchangeable.
+13. All generated projects target net8.0 unless another framework was explicitly requested.
+14. All generated projects are added to the existing solution.
+15. Required Business/Core internal references point to the newly generated project's components.
+16. No unintended external project references were added.
+17. Infrastructure references were not added automatically.
+18. The generated folder and file structure matches the selected creation mode.
+19. Module creation creates the correct module directory and projects inside it.
+20. Direct component requests create only the requested project.
+21. Similar-project generation reproduces structure without copying implementation.
+22. No business or application implementation was generated.
+23. The solution remains valid after project creation.
