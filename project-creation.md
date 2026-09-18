@@ -1,902 +1,438 @@
 # NYBOSS Project Creation
 
-This document defines how NYBOSS .NET projects and modules are created.
+This document defines the project-creation decision rules.
 
-The current stage creates:
+Detailed project-type specifications are defined in:
 
-- projects
-- modules
-- folders
-- structural files
-- project configuration
-- Business/Core project references
-- solution entries
+references/project-archetypes.md
 
-Business and application implementation is not part of this stage.
+Detailed repository structures are defined in:
 
-Infrastructure references are intentionally deferred.
+references/project-structure.md
+
+---
+
+# Creation Modes
+
+Supported modes:
+
+1. Default project
+2. Explicit composition
+3. Direct component project
+4. Similar project
+5. Module creation
+6. Archetype-specific project
 
 ---
 
 # Application Areas
 
-NYBOSS server projects are organized under:
+Supported application areas:
 
 Apps/Business/
-
 Apps/Core/
-
 Infrastructure/
-
-The structure depends on the selected application area.
-
----
-
-# Project vs Module
-
-A project is an individual `.csproj`.
-
-A module is a logical directory containing one or more projects.
-
-Examples:
-
-Apps/Business/<ModuleName>/
-
-Apps/Core/<ModuleName>/
-
-Infrastructure/<ModuleName>/
-
-If the user says:
-
-"Create <ProjectName> project"
-
-create the default composition for that application area.
-
-If the user says:
-
-"Create <ProjectName>.API project"
-
-create only:
-
-<ProjectName>.API
-
-If the user says:
-
-"Create <ModuleName> module"
-
-create the module and its default project composition.
-
-If the user specifies both a module and project name, place the project inside the requested module.
+Tests/UnitTests/
 
 ---
 
-# Target Framework
+# Default Business
 
-All newly generated NYBOSS projects target:
+Request:
 
-net8.0
+Create <ProjectName> project
 
-Use .NET 8 explicitly.
-
-Do not allow the installed SDK version to determine the target framework automatically.
-
----
-
-# Business
-
-## Default Business Project
-
-Create:
-
-<ProjectName>.API
-<ProjectName>.Common
-<ProjectName>.Repository
-<ProjectName>.Services
-
-under:
+Result:
 
 Apps/Business/<ProjectName>/
 
----
-
-## Default Business Module
-
-When the user requests:
-
-"Create <ModuleName> module"
-
-for Business, create:
-
-Apps/Business/<ModuleName>/
-
-containing:
-
-<ModuleName>.API
-<ModuleName>.Common
-<ModuleName>.Repository
-<ModuleName>.Services
-
----
-
-## Business API
-
-Create:
-
 <ProjectName>.API
-
-using:
-
-dotnet new webapi --framework net8.0 --use-controllers --name <ProjectName>.API
-
-The API uses the controller-based ASP.NET Core Web API template.
-
-The API structure is:
-
-<ProjectName>.API/
-├── Controllers/
-├── Properties/
-│   └── launchSettings.json
-├── appsettings.json
-├── appsettings.Development.json
-├── appsettings.Local.json
-├── build-info.json
-├── <ProjectName>.API.csproj
-└── Program.cs
-
-The actual .NET template may generate additional files.
-
-Remove:
-
-<ProjectName>.API.http
-
-unless explicitly requested.
-
-Keep all valid CLI-generated content.
-
-Do not create business-specific controllers.
-
----
-
-## Business Common
-
-Create:
-
 <ProjectName>.Common
-
-using:
-
-dotnet new classlib --framework net8.0 --name <ProjectName>.Common
-
-Structure:
-
-<ProjectName>.Common/
-├── Constants/
-│   └── <ProjectName>Constants.cs
-├── Contracts/
-│   ├── Repository/
-│   │   └── I<ProjectName>Repository.cs
-│   └── Services/
-│       └── I<ProjectName>Service.cs
-├── Models/
-│   └── <ProjectName>Model.cs
-├── Options/
-│   └── <ProjectName>Options.cs
-├── GlobalUsings.cs
-└── <ProjectName>.Common.csproj
-
-These are structural skeleton files only.
-
----
-
-## Business Repository
-
-Create:
-
-<ProjectName>.Repository
-
-using:
-
-dotnet new classlib --framework net8.0 --name <ProjectName>.Repository
-
-Structure:
-
-<ProjectName>.Repository/
-├── <ProjectName>Repository.cs
-├── RegisterServices.cs
-└── <ProjectName>.Repository.csproj
-
-These are structural skeleton files only.
-
----
-
-## Business Services
-
-Create:
-
-<ProjectName>.Services
-
-using:
-
-dotnet new classlib --framework net8.0 --name <ProjectName>.Services
-
-Structure:
-
-<ProjectName>.Services/
-├── <ProjectName>Service.cs
-├── RegisterServices.cs
-└── <ProjectName>.Services.csproj
-
-These are structural skeleton files only.
-
----
-
-# Default Business References
-
-When all default Business projects exist:
-
-<ProjectName>.API
-    -> <ProjectName>.Services
-
-<ProjectName>.Services
-    -> <ProjectName>.Common
-    -> <ProjectName>.Repository
-
-<ProjectName>.Repository
-    -> <ProjectName>.Common
-
-Use:
-
-dotnet add <project> reference <referenced-project>
-
-Only create references to projects that actually exist.
-
----
-
-# Core
-
-## Default Core Project
-
-Create:
-
-<ProjectName>.API
-<ProjectName>.Domain
 <ProjectName>.Repository
 <ProjectName>.Services
 
-under:
+---
+
+# Default Core
+
+Request:
+
+Create <ProjectName> project
+
+Result:
 
 Apps/Core/<ProjectName>/
 
+<ProjectName>.API
+<ProjectName>.Domain
+<ProjectName>.Repository
+<ProjectName>.Services
+
 ---
 
-## Default Core Module
+# Default Infrastructure
 
-When the user requests:
+Infrastructure has no universal default composition.
 
-"Create <ModuleName> module"
+If the user says:
 
-for Core, create:
+Create <ProjectName> project
+
+for Infrastructure:
+
+create one Infrastructure project unless a module/archetype is explicitly identified.
+
+Do not invent Common/Repository/Services.
+
+---
+
+# Direct Component
+
+Request:
+
+Create <ProjectName>.API project
+
+Result:
+
+<ProjectName>.API
+
+only.
+
+Request:
+
+Create <ProjectName>.Repository project
+
+Result:
+
+<ProjectName>.Repository
+
+only.
+
+Request:
+
+Create <ProjectName>.Services project
+
+Result:
+
+<ProjectName>.Services
+
+only.
+
+---
+
+# Explicit Composition
+
+Request:
+
+Create <ProjectName> with API, Common and Services
+
+Create:
+
+<ProjectName>.API
+<ProjectName>.Common
+<ProjectName>.Services
+
+Do not add Repository.
+
+References must only connect projects that exist.
+
+---
+
+# Module
+
+Request:
+
+Create <ModuleName> module
+
+Business:
+
+Apps/Business/<ModuleName>/
+
+Core:
 
 Apps/Core/<ModuleName>/
 
-containing:
-
-<ModuleName>.API
-<ModuleName>.Domain
-<ModuleName>.Repository
-<ModuleName>.Services
-
----
-
-## Core API
-
-Create:
-
-<ProjectName>.API
-
-using:
-
-dotnet new webapi --framework net8.0 --use-controllers --name <ProjectName>.API
-
-Structure:
-
-<ProjectName>.API/
-├── Controllers/
-├── Properties/
-│   └── launchSettings.json
-├── appsettings.json
-├── appsettings.Development.json
-├── appsettings.Local.json
-├── build-info.json
-├── <ProjectName>.API.csproj
-└── Program.cs
-
-Remove:
-
-<ProjectName>.API.http
-
-unless explicitly requested.
-
-Keep all valid CLI-generated content.
-
----
-
-## Core Domain
-
-Create:
-
-<ProjectName>.Domain
-
-using:
-
-dotnet new classlib --framework net8.0 --name <ProjectName>.Domain
-
-Default structure:
-
-<ProjectName>.Domain/
-├── Models/
-│   └── <ProjectName>Model.cs
-├── Contracts/
-│   ├── Repository/
-│   │   └── I<ProjectName>Repository.cs
-│   └── Services/
-│       └── I<ProjectName>Service.cs
-├── Constants/
-│   └── <ProjectName>Constants.cs
-├── Options/
-│   └── <ProjectName>Options.cs
-├── GlobalUsings.cs
-└── <ProjectName>.Domain.csproj
-
-Domain is not automatically equivalent to Common.
-
----
-
-## Core Repository
-
-Create:
-
-<ProjectName>.Repository
-
-using:
-
-dotnet new classlib --framework net8.0 --name <ProjectName>.Repository
-
-Structure:
-
-<ProjectName>.Repository/
-├── <ProjectName>Repository.cs
-├── RegisterServices.cs
-└── <ProjectName>.Repository.csproj
-
----
-
-## Core Services
-
-Create:
-
-<ProjectName>.Services
-
-using:
-
-dotnet new classlib --framework net8.0 --name <ProjectName>.Services
-
-Structure:
-
-<ProjectName>.Services/
-├── <ProjectName>Service.cs
-├── RegisterServices.cs
-└── <ProjectName>.Services.csproj
-
----
-
-# Default Core References
-
-When all default Core projects exist:
-
-<ProjectName>.API
-    -> <ProjectName>.Services
-
-<ProjectName>.Services
-    -> <ProjectName>.Domain
-    -> <ProjectName>.Repository
-
-<ProjectName>.Repository
-    -> <ProjectName>.Domain
-
-Use:
-
-dotnet add <project> reference <referenced-project>
-
-Only create references to projects that actually exist.
-
----
-
-# Infrastructure
-
-Infrastructure does not have one universal project structure.
-
-Infrastructure contains different types of modules and standalone projects.
-
-The creation rules below define the known module structures.
-
----
-
-# Infrastructure Module Types
-
-Known Infrastructure module structures include:
-
-1. Standard service module
-2. Service host module
-3. API client module
-4. Message engine module
-5. Notification SDK module
-6. Transport module
-7. Watcher module
-
-The user can explicitly specify components instead of using one of these templates.
-
----
-
-# Infrastructure Standard Service Module
-
-Use this structure for an Infrastructure module that follows the standard service pattern:
+Infrastructure:
 
 Infrastructure/<ModuleName>/
 
-containing:
+For Business and Core, use the default composition.
 
-<ModuleName>.Common
-<ModuleName>.Repository
-<ModuleName>.Services
+For Infrastructure, determine the module type from:
 
-Structure:
+- explicit wording
+- known template
+- structural reference
 
-<ModuleName>/
-├── <ModuleName>.Common/
-├── <ModuleName>.Repository/
-└── <ModuleName>.Services/
+---
 
-All projects target:
+# Archetype Selection
+
+If the user uses terminology associated with an archetype, select that archetype.
+
+Examples:
+
+"web api"
+-> Web API
+
+"worker"
+-> Worker / Windows Service host
+
+"windows service"
+-> Worker / Windows Service host
+
+"message processor"
+-> Message-processing logic library or Worker host depending on wording
+
+"message processing library"
+-> Message-processing logic library
+
+"workflow executable"
+-> Workflow EXE host
+
+"console executable"
+-> Workflow EXE host unless another type is explicitly requested
+
+"unit test"
+-> Unit-test project
+
+"repository"
+-> Repository library
+
+"services"
+-> Services library
+
+"common"
+-> Common library
+
+"domain"
+-> Domain library
+
+---
+
+# Message Processing
+
+Message-processing consists of two separate archetypes:
+
+1. Message-processing logic library
+2. Worker / Processor host
+
+Do not combine them into one project unless the user explicitly requests a single custom project.
+
+---
+
+# Worker Host
+
+Default new project:
+
+<ProjectName>.ProcessorHost
+
+SDK:
+
+Microsoft.NET.Sdk.Worker
+
+Target:
 
 net8.0
 
-Create each project using:
-
-dotnet new classlib --framework net8.0 --name <ModuleName>.Common
-
-dotnet new classlib --framework net8.0 --name <ModuleName>.Repository
-
-dotnet new classlib --framework net8.0 --name <ModuleName>.Services
-
-Do not add Infrastructure project references during this phase.
+The Worker host references the message-processing logic project when the two are created together.
 
 ---
 
-# Infrastructure Service Host Module
+# Workflow EXE
 
-Use this structure when the Infrastructure module explicitly represents a service host:
+Default new project:
 
-Infrastructure/<ModuleName>/
+<ProjectName>.Host
 
-containing:
+SDK:
 
-<ModuleName>.Common
-<ModuleName>.Repository
-<ModuleName>.Services
-<ModuleName>.ServiceHost
+Microsoft.NET.Sdk
 
-Structure:
+OutputType:
 
-<ModuleName>/
-├── <ModuleName>.Common/
-├── <ModuleName>.Repository/
-├── <ModuleName>.ServiceHost/
-└── <ModuleName>.Services/
+Exe
 
-The exact project type of ServiceHost should be determined from the requested structure or structural reference.
-
-All new projects target:
+Target:
 
 net8.0
 
-Do not copy implementation from an existing ServiceHost.
+This is a run-once process.
 
-Do not add Infrastructure project references during this phase.
-
----
-
-# Infrastructure API Client Module
-
-An API client module may contain an API client project rather than the standard Common/Repository/Services composition.
-
-Example structure:
-
-Infrastructure/APIClients/
-
-containing:
-
-<ModuleName>.API.Client
-
-Use the new naming convention.
-
-Do not reproduce a legacy project name such as:
-
-BNPP.NYBOSS.<ProjectName>
-
-for a newly created project.
-
-Create the project as an appropriate .NET 8 class library unless the user explicitly requests another project type.
+Do not use the Worker SDK.
 
 ---
 
-# Infrastructure Message Engine Module
+# Unit Tests
 
-The repository contains MessageEngine-related projects with a non-uniform structure.
+Default:
 
-A MessageEngine-style module may contain:
+Tests/UnitTests/<ApplicationArea>/<ProjectName>/
 
-<ModuleName>.MessageProcessing
-<ModuleName>.Messaging
-<ModuleName>.Common
-<ModuleName>.Repository
-<ModuleName>.Services
+<ProjectName>.UnitTest
 
-The exact module structure should be selected only when the user explicitly requests this module type or provides a corresponding structural reference.
+The test project references the production projects it tests.
 
-Do not assume MessageEngine has the standard service-module structure.
-
-All newly generated projects target:
-
-net8.0
-
-Do not add Infrastructure project references during this phase.
+Production projects must not reference the test project.
 
 ---
 
-# Infrastructure Notification SDK Module
+# Project References
 
-A notification SDK-style module may contain:
+Project references must be selected from the archetype.
 
-<ModuleName>.SDK
-<ModuleName>.SDK.Common
+Do not use a single universal dependency graph.
 
-Example structure:
+Business default:
 
-Infrastructure/<ModuleName>/
+API
+-> API.Host
+-> Services
 
-├── <ModuleName>.SDK/
-└── <ModuleName>.SDK.Common/
+Services
+-> Repository
 
-Use the new naming convention.
+Repository
+-> DataAccess
+-> Common
 
-Do not introduce legacy organizational prefixes.
+Common
+-> Infrastructure Common
 
-All projects target:
+Core follows the equivalent Core architecture.
 
-net8.0
-
----
-
-# Infrastructure Transport Module
-
-A transport-style module may contain:
-
-<ModuleName>.FileShare
-<ModuleName>.Repository
-<ModuleName>.Common
-<ModuleName>.Services
-
-Example:
-
-Infrastructure/<ModuleName>/
-
-├── <ModuleName>.FileShare/
-├── <ModuleName>.Repository/
-├── <ModuleName>.Common/
-└── <ModuleName>.Services/
-
-The exact component names may be explicitly supplied by the user.
-
-Do not invent additional transport projects.
-
-All new projects target:
-
-net8.0
+Infrastructure dependencies are archetype-specific.
 
 ---
 
-# Infrastructure Watcher Module
+# Reference Safety
 
-A watcher-style module may contain:
+Before adding a reference:
 
-<ModuleName>.Common
-<ModuleName>.Repository
-<ModuleName>.ServiceHost
-<ModuleName>.Services
+1. Confirm the referenced project exists.
+2. Confirm the archetype permits the dependency.
+3. Confirm the reference path.
+4. Confirm the dependency does not create an architectural cycle.
+5. Add the reference only once.
 
-Example:
+Do not reference:
 
-Infrastructure/<ModuleName>/
+- API from Services
+- API from Repository
+- Services from Repository
+- host projects from lower layers
+- tests from production projects
 
-├── <ModuleName>.Common/
-├── <ModuleName>.Repository/
-├── <ModuleName>.ServiceHost/
-└── <ModuleName>.Services/
-
-Use this structure only when the requested Infrastructure module is a watcher/service-host style module.
-
-Do not assume every watcher uses exactly this structure if the user provides another reference.
+unless a structural reference explicitly establishes an exception.
 
 ---
 
-# Infrastructure Standalone Projects
+# Naming
 
-Infrastructure also contains projects that are not modules.
-
-Examples of structural categories include:
-
-- API Host
-- API Infrastructure
-- Common
-- Custom Executable Host
-- Data Access
-- Logging
-- Repository
-- Service Host
-- Storage
-
-When creating a standalone Infrastructure project:
-
-Infrastructure/<ProjectName>/
-
-or, if the project is directly under Infrastructure:
-
-Infrastructure/<ProjectName>/
-
-create only the requested project.
-
-Do not automatically create Common, Repository, Services, or another project.
-
-If the user asks for a project similar to an existing Infrastructure project, reproduce its structure only.
-
----
-
-# Explicit Infrastructure Composition
-
-If the user says:
-
-"Create <ModuleName> module with Common, Repository and Services"
-
-create:
-
-Infrastructure/<ModuleName>/
-
-├── <ModuleName>.Common/
-├── <ModuleName>.Repository/
-└── <ModuleName>.Services/
-
-Do not create API.
-
-Do not create ServiceHost.
-
-Do not create other projects.
-
-If the user says:
-
-"Create <ProjectName>.API project"
-
-create only:
-
-<ProjectName>.API
-
----
-
-# Infrastructure Naming
-
-All newly generated Infrastructure projects use the new naming convention.
-
-Preferred:
+New projects:
 
 <ProjectName>.<Component>
 
-Examples:
+Never create new:
 
-<ProjectName>.Common
-<ProjectName>.Repository
-<ProjectName>.Services
-<ProjectName>.API
-<ProjectName>.ServiceHost
-<ProjectName>.API.Client
-<ProjectName>.SDK
+BNPP.NYBOSS.<ProjectName>...
 
-Do not create new projects using legacy names such as:
+Legacy projects may be referenced.
 
-BNPP.NYBOSS.<ProjectName>
-
-Legacy projects are structural references only.
+Legacy project names must not be copied into new project names.
 
 ---
 
-# Infrastructure Structural Files
+# Framework
 
-Infrastructure structural files must be created only when required by the selected Infrastructure project/module structure.
+All new projects:
 
-Do not assume that every Infrastructure project needs:
-
-- Models
-- Contracts
-- Constants
-- Options
-- RegisterServices
-- GlobalUsings
-- ServiceHost
-- Repository
-
-The structure must come from:
-
-- the selected known module template
-- explicit user requirements
-- a structural reference project
-
-Structural files contain minimal valid skeleton code only.
-
-Do not implement Infrastructure functionality.
-
----
-
-# Explicit Project Creation
-
-If the user specifies components, create only those components.
-
-Examples:
-
-"Create <ProjectName> with API and Services"
-
-creates:
-
-<ProjectName>.API
-<ProjectName>.Services
-
-"Create <ProjectName> with Common and Repository"
-
-creates:
-
-<ProjectName>.Common
-<ProjectName>.Repository
-
-Do not add unspecified components.
-
----
-
-# Similar Project
-
-For:
-
-"Create <ProjectName> similar to <ExistingProject>"
-
-inspect:
-
-- project composition
-- project type
-- folder structure
-- file structure
-- file names
-- project directories
-- module structure
-
-Recreate the structure with the new project name.
-
-Do not copy implementation.
-
----
-
-# Similar Project File Rule
-
-If a reference project contains:
-
-<Folder>/<File>
-
-create:
-
-<NewProject>/<Folder>/<File>
-
-using the corresponding new project naming where the file is project-specific.
-
-Reproduce:
-
-- file name
-- location
-- extension
-
-Do not reproduce implementation.
-
-If `dotnet new` generates a corresponding file, preserve the CLI-generated content.
-
----
-
-# Structural File Content
-
-Files created specifically to represent project structure should contain minimal valid skeleton code.
-
-Examples:
-
-<ProjectName>Model.cs
-
-<ProjectName>Constants.cs
-
-<ProjectName>Options.cs
-
-I<ProjectName>Repository.cs
-
-I<ProjectName>Service.cs
-
-<ProjectName>Repository.cs
-
-<ProjectName>Service.cs
-
-Do not implement application functionality.
-
----
-
-# CLI-Generated File Content
-
-When `dotnet new` creates a file:
-
-- preserve its generated content
-- do not empty it
-- do not replace it with a placeholder
-- do not copy content from another project
-
-Modify generated files only when required for:
-
-- net8.0
-- project naming
-- required project configuration
-- Business/Core references where applicable
-
----
-
-# API Template Cleanup
-
-The API template may generate:
-
-<ProjectName>.API.http
-
-This file is not part of the default NYBOSS API structure.
-
-Remove it after API project creation unless explicitly requested.
+net8.0
 
 ---
 
 # Solution
 
-Use:
+Existing solution:
 
 BNPP.NYBOSS.NextGen.Server.sln
 
-Add every generated project using:
+Every generated project must be added to the existing solution.
 
-dotnet sln BNPP.NYBOSS.NextGen.Server.sln add <project-path>
-
-Do not create a separate solution.
+Never create another solution.
 
 ---
 
-# Structure-Only Completion
+# CLI Templates
 
-Project/module creation is complete when:
+API:
 
-- requested project/module exists
-- correct application area is used
-- requested projects exist
-- required folders exist
-- required structural files exist
-- CLI-generated files retain their generated content
-- unwanted API `.http` files are removed
-- project names follow the new naming convention
-- projects target net8.0
-- generated projects are added to the existing solution
-- Business/Core references are created where their predefined rules require them
-- Infrastructure references are not added automatically
-- no business or application implementation has been generated
+dotnet new webapi --framework net8.0 --use-controllers --name <ProjectName>.API
+
+Class library:
+
+dotnet new classlib --framework net8.0 --name <ProjectName>.<Component>
+
+Worker:
+
+dotnet new worker --framework net8.0 --name <ProjectName>.ProcessorHost
+
+Workflow EXE:
+
+Use Microsoft.NET.Sdk and configure:
+
+<OutputType>Exe</OutputType>
+
+Unit test:
+
+Use the test project template appropriate for the installed .NET 8 SDK and then apply the NYBOSS test configuration from project-archetypes.md.
+
+---
+
+# Template Cleanup
+
+Remove:
+
+<ProjectName>.API.http
+
+unless explicitly requested.
+
+Do not remove valid CLI-generated files.
+
+---
+
+# Similar Project
+
+For similar-project requests:
+
+inspect structure only.
+
+Allowed:
+
+- project names
+- project type
+- directories
+- folders
+- file names
+- project references
+- project metadata
+
+Do not copy implementation.
+
+Apply the current naming convention to the new project.
+
+---
+
+# Structure-only Boundary
+
+Create:
+
+- project
+- module
+- directories
+- structural files
+- project configuration
+- applicable project references
+- solution entries
+
+Do not implement application functionality.
