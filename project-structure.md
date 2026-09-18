@@ -1,690 +1,46 @@
 # NYBOSS Project Structure
 
-The NYBOSS server repository contains:
+This document defines the physical project and folder structures.
 
-- Business applications
-- Core applications
-- Infrastructure projects
-- Infrastructure modules
+Archetype-specific SDK and dependency rules are defined in:
 
-Project composition varies by application area.
-
-This document defines the structure used when generating new projects and modules.
-
-It does not define application implementation.
+references/project-archetypes.md
 
 ---
 
 # Application Areas
 
-NYBOSS projects are organized under:
-
 Apps/Business/
-
 Apps/Core/
-
 Infrastructure/
+Tests/UnitTests/
 
 ---
 
-# Project vs Module
+# Business
 
-A project is an individual `.csproj`.
-
-A module is a logical directory containing one or more projects.
-
-For example:
-
-Apps/Business/<ModuleName>/
-
-Apps/Core/<ModuleName>/
-
-Infrastructure/<ModuleName>/
-
-Do not create a module directory unless the user requests a module or the selected structure explicitly requires one.
-
----
-
-# Business Applications
-
-Business applications are normally located under:
-
-Apps/Business/
-
-Default Business composition:
-
-<ProjectName>.API
-<ProjectName>.Common
-<ProjectName>.Repository
-<ProjectName>.Services
-
----
-
-# Default Business Module
-
-A Business module uses:
-
-Apps/Business/<ModuleName>/
-
-with:
-
-<ModuleName>.API
-<ModuleName>.Common
-<ModuleName>.Repository
-<ModuleName>.Services
-
----
-
-# Default Business API Structure
+Apps/Business/<ProjectName>/
 
 <ProjectName>.API/
-
-├── Controllers/
-├── Properties/
-│   └── launchSettings.json
-├── appsettings.json
-├── appsettings.Development.json
-├── appsettings.Local.json
-├── build-info.json
-├── <ProjectName>.API.csproj
-└── Program.cs
-
-The API uses the controller-based ASP.NET Core Web API template.
-
-The template-generated:
-
-<ProjectName>.API.http
-
-file is not part of the default NYBOSS structure.
-
-If generated, remove it.
-
-CLI-generated files must retain their generated content.
+<ProjectName>.Common/
+<ProjectName>.Repository/
+<ProjectName>.Services/
 
 ---
 
-# Default Business Common Structure
+# Business Common
 
 <ProjectName>.Common/
 
-├── Constants/
-│   └── <ProjectName>Constants.cs
-├── Contracts/
-│   ├── Repository/
-│   │   └── I<ProjectName>Repository.cs
-│   └── Services/
-│       └── I<ProjectName>Service.cs
-├── Models/
-│   └── <ProjectName>Model.cs
-├── Options/
-│   └── <ProjectName>Options.cs
-├── GlobalUsings.cs
-└── <ProjectName>.Common.csproj
-
-These files represent the initial project skeleton.
-
-They do not contain business implementation.
-
----
-
-# Default Business Repository Structure
-
-<ProjectName>.Repository/
-
-├── <ProjectName>Repository.cs
-├── RegisterServices.cs
-└── <ProjectName>.Repository.csproj
-
-These files are structural skeletons.
-
----
-
-# Default Business Services Structure
-
-<ProjectName>.Services/
-
-├── <ProjectName>Service.cs
-├── RegisterServices.cs
-└── <ProjectName>.Services.csproj
-
-These files are structural skeletons.
-
----
-
-# Core Applications
-
-Core applications are normally located under:
-
-Apps/Core/
-
-Default Core composition:
-
-<ProjectName>.API
-<ProjectName>.Domain
-<ProjectName>.Repository
-<ProjectName>.Services
-
----
-
-# Default Core Module
-
-A Core module uses:
-
-Apps/Core/<ModuleName>/
-
-with:
-
-<ModuleName>.API
-<ModuleName>.Domain
-<ModuleName>.Repository
-<ModuleName>.Services
-
----
-
-# Default Core API Structure
-
-<ProjectName>.API/
-
-├── Controllers/
-├── Properties/
-│   └── launchSettings.json
-├── appsettings.json
-├── appsettings.Development.json
-├── appsettings.Local.json
-├── build-info.json
-├── <ProjectName>.API.csproj
-└── Program.cs
-
-The API uses the controller-based ASP.NET Core Web API template.
-
-The template-generated:
-
-<ProjectName>.API.http
-
-file is not part of the default NYBOSS structure.
-
-If generated, remove it.
-
-CLI-generated files must retain their generated content.
-
----
-
-# Default Core Domain Structure
-
-<ProjectName>.Domain/
-
-├── Models/
-│   └── <ProjectName>Model.cs
-├── Contracts/
-│   ├── Repository/
-│   │   └── I<ProjectName>Repository.cs
-│   └── Services/
-│       └── I<ProjectName>Service.cs
-├── Constants/
-│   └── <ProjectName>Constants.cs
-├── Options/
-│   └── <ProjectName>Options.cs
-├── GlobalUsings.cs
-└── <ProjectName>.Domain.csproj
-
-Domain is a Core domain project.
-
-Domain is not automatically equivalent to Business Common.
-
-Do not replace Domain with Common.
-
----
-
-# Default Core Repository Structure
-
-<ProjectName>.Repository/
-
-├── <ProjectName>Repository.cs
-├── RegisterServices.cs
-└── <ProjectName>.Repository.csproj
-
-These are structural skeleton files.
-
----
-
-# Default Core Services Structure
-
-<ProjectName>.Services/
-
-├── <ProjectName>Service.cs
-├── RegisterServices.cs
-└── <ProjectName>.Services.csproj
-
-These are structural skeleton files.
-
----
-
-# Common vs Domain
-
-Business default:
-
-<ProjectName>.Common
-
-Core default:
-
-<ProjectName>.Domain
-
-Common and Domain are separate project types.
-
-Do not treat them as interchangeable.
-
-When a similar project is used as a reference, preserve the reference component type unless the user explicitly requests a different composition.
-
----
-
-# Infrastructure
-
-Infrastructure is structurally different from Business and Core.
-
-Infrastructure contains:
-
-1. Modules containing multiple projects
-2. Standalone projects
-
-There is no single universal Infrastructure project composition.
-
-Do not apply the Business or Core default composition to Infrastructure.
-
----
-
-# Infrastructure Module Structure
-
-Known Infrastructure module categories include:
-
-- APIClients
-- service modules
-- message engine modules
-- watcher modules
-- notification modules
-- transport modules
-
-Each category can have a different project composition.
-
----
-
-# Infrastructure Standard Service Module
-
-Default structure for a standard Infrastructure service module:
-
-Infrastructure/<ModuleName>/
-
-├── <ModuleName>.Common/
-├── <ModuleName>.Repository/
-└── <ModuleName>.Services/
-
-The projects are:
-
-<ModuleName>.Common
-
-<ModuleName>.Repository
-
-<ModuleName>.Services
-
-All target:
-
-net8.0
-
-No Infrastructure project references are automatically created in the current phase.
-
----
-
-# Infrastructure Service Host Module
-
-A service-host-style module may contain:
-
-Infrastructure/<ModuleName>/
-
-├── <ModuleName>.Common/
-├── <ModuleName>.Repository/
-├── <ModuleName>.ServiceHost/
-└── <ModuleName>.Services/
-
-The exact project type and structure of ServiceHost should be determined by the requested module type or structural reference.
-
-Do not copy implementation.
-
----
-
-# Infrastructure API Client Module
-
-An API client module may contain:
-
-Infrastructure/<ModuleName>/
-
-└── <ModuleName>.API.Client/
-
-or multiple API client projects when explicitly requested.
-
-New projects must use the new naming convention.
-
-Do not create new legacy names such as:
-
-BNPP.NYBOSS.<ProjectName>
-
----
-
-# Infrastructure Message Engine Module
-
-A MessageEngine-style module can contain several different project types.
-
-A representative structure is:
-
-Infrastructure/<ModuleName>/
-
-├── <ModuleName>.MessageProcessing/
-├── <ModuleName>.Messaging/
-├── <ModuleName>.Common/
-├── <ModuleName>.Repository/
-└── <ModuleName>.Services/
-
-This is a module-specific structure, not a universal Infrastructure template.
-
-Use it only when the user requests a MessageEngine-style module or supplies an appropriate structural reference.
-
----
-
-# Infrastructure Notification SDK Module
-
-A notification SDK-style module may contain:
-
-Infrastructure/<ModuleName>/
-
-├── <ModuleName>.SDK/
-└── <ModuleName>.SDK.Common/
-
-Use the new naming convention for new projects.
-
-Do not introduce legacy organizational prefixes.
-
----
-
-# Infrastructure Transport Module
-
-A transport-style module may contain:
-
-Infrastructure/<ModuleName>/
-
-├── <ModuleName>.FileShare/
-├── <ModuleName>.Repository/
-├── <ModuleName>.Common/
-└── <ModuleName>.Services/
-
-The actual transport components may vary.
-
-Do not automatically create components that were not requested.
-
----
-
-# Infrastructure Watcher Module
-
-A watcher-style module may contain:
-
-Infrastructure/<ModuleName>/
-
-├── <ModuleName>.Common/
-├── <ModuleName>.Repository/
-├── <ModuleName>.ServiceHost/
-└── <ModuleName>.Services/
-
-This structure is used for watcher/service-host style modules.
-
-If the user provides a different watcher structure, follow the requested structure instead.
-
----
-
-# Infrastructure Standalone Projects
-
-Infrastructure also contains standalone projects.
-
-Examples of categories include:
-
-API Host
-
-API Infrastructure
-
-Common
-
-Custom Executable Host
-
-Data Access
-
-Logging
-
-Repository
-
-Service Host
-
-Storage
-
-A standalone project should not automatically create additional projects.
-
-For example, creating:
-
-Infrastructure/<ProjectName>/
-
-does not imply:
-
-<ProjectName>.Common
-
-<ProjectName>.Repository
-
-<ProjectName>.Services
-
-unless explicitly requested.
-
----
-
-# Infrastructure Standalone Project Structure
-
-A standalone Infrastructure project may contain its own folders and files.
-
-Examples of structural folder categories observed in the repository include:
-
-Constants/
-
-Contracts/
-
-DBContexts/
-
-Handlers/
-
-Models/
-
-Utilities/
-
-Options/
-
-Attributes/
-
-Authentication/
-
-Controller/
-
-Http/
-
-Middleware/
-
-Services/
-
-Swagger/
-
-Enrichers/
-
-Extensions/
-
-Sinks/
-
-Validators/
-
-Hubs/
-
-ServiceLocator/
-
-These are examples of existing Infrastructure structures.
-
-They are not a universal template.
-
-Only create them when:
-
-- the selected Infrastructure template requires them
-- the user explicitly requests them
-- or a similar-project request establishes them structurally
-
----
-
-# Infrastructure Structural File Rule
-
-Infrastructure structural files are project-specific.
-
-Examples of existing structural file categories include:
-
-GlobalAssemblyInfo.cs
-
-globalusing.cs
-
-RegisterServices.cs
-
-Startup.cs
-
-ApplicationInfo.cs
-
-InternalsVisibleTo.cs
-
-ModuleLoader.cs
-
-RepositoryBase.cs
-
-IS3FileManager.cs
-
-S3FileManager.cs
-
-Do not automatically add these files to every Infrastructure project.
-
-For new projects, create only files required by the selected structure.
-
-Structural files created by the generator should contain minimal valid skeleton code.
-
-Do not copy implementation from existing Infrastructure projects.
-
----
-
-# Project Naming
-
-All newly created projects use:
-
-<ProjectName>.<Component>
-
-Examples:
-
-<ProjectName>.API
-
-<ProjectName>.Common
-
-<ProjectName>.Domain
-
-<ProjectName>.Repository
-
-<ProjectName>.Services
-
-<ProjectName>.ServiceHost
-
-<ProjectName>.API.Client
-
-<ProjectName>.SDK
-
-Do not add:
-
-BNPP.NYBOSS.
-
-or another legacy organizational prefix.
-
-Existing projects containing legacy prefixes are structural references only.
-
----
-
-# Module Naming
-
-A module is a directory.
-
-Example:
-
-<ModuleName>/
-
-Projects inside the module use:
-
-<ModuleName>.<Component>
-
-For example:
-
-<ModuleName>/
-
-├── <ModuleName>.Common/
-├── <ModuleName>.Repository/
-└── <ModuleName>.Services/
-
-The module name itself is not required to be a `.csproj`.
-
----
-
-# Direct Project Creation
-
-If the user explicitly requests:
-
-"Create <ProjectName>.API project"
-
-create only:
-
-<ProjectName>.API
-
-Do not create:
-
-<ProjectName>.Common
-
-<ProjectName>.Domain
-
-<ProjectName>.Repository
-
-<ProjectName>.Services
-
-or any other project.
-
----
-
-# Explicit Composition
-
-If the user specifies components, create only those components.
-
-Example:
-
-"Create <ProjectName> with API, Common and Services"
-
-creates:
-
-<ProjectName>.API
-
-<ProjectName>.Common
-
-<ProjectName>.Services
-
-Do not create Repository.
-
----
-
-# Structural File Rule
-
-Required structural folders should not be left as empty directories when the development environment or source control would not represent them.
-
-Create a minimal structural file where necessary.
-
-Examples:
-
 Constants/
     <ProjectName>Constants.cs
+
+Contracts/
+    Repository/
+        I<ProjectName>Repository.cs
+
+    Services/
+        I<ProjectName>Service.cs
 
 Models/
     <ProjectName>Model.cs
@@ -692,232 +48,404 @@ Models/
 Options/
     <ProjectName>Options.cs
 
-Contracts/Repository/
-    I<ProjectName>Repository.cs
+GlobalUsings.cs
 
-Contracts/Services/
-    I<ProjectName>Service.cs
+<ProjectName>.Common.csproj
 
-Repository:
+Common contains shared contracts, models, enums, constants and validation structures.
+
+Do not place business implementation here.
+
+---
+
+# Business Repository
+
+<ProjectName>.Repository/
 
 <ProjectName>Repository.cs
+RegisterServices.cs
+<ProjectName>.Repository.csproj
 
-Services:
+Additional repository classes may be added when explicitly required by the feature.
+
+---
+
+# Business Services
+
+<ProjectName>.Services/
 
 <ProjectName>Service.cs
+RegisterServices.cs
+<ProjectName>.Services.csproj
 
-For Infrastructure, use the structural files associated with the selected Infrastructure structure.
-
----
-
-# CLI-Generated File Rule
-
-Files generated by `dotnet new` must retain their generated content.
-
-Do not blank or replace:
-
-- Program.cs
-- `.csproj`
-- launchSettings.json
-- template-generated appsettings files
-- other valid CLI-generated files
-
-Modify them only when required for:
-
-- target framework
-- project naming
-- project configuration
-- Business/Core project references
+Additional service classes may be added when explicitly required by the feature.
 
 ---
 
-# Similar Project Structure
+# Business API
 
-When creating a project similar to an existing project, determine:
+<ProjectName>.API/
 
-- application area
-- module structure
-- project composition
-- project type
-- project directories
-- folder hierarchy
-- file hierarchy
-- file names
-- file locations
+Controllers/
 
-Recreate the applicable structure with the new naming convention.
+Properties/
+    launchSettings.json
 
----
+appsettings.json
+appsettings.Development.json
+appsettings.Local.json
+build-info.json
+Program.cs
 
-# Similar Project Rule
+<ProjectName>.API.csproj
 
-A similar-project request means:
+The CLI may generate additional files.
 
-STRUCTURE SIMILARITY
-
-not:
-
-CONTENT COPYING
-
-Reproduce:
-
-- project structure
-- module structure
-- directory structure
-- folder structure
-- file structure
-- applicable Business/Core project relationships
-
-Do not reproduce:
-
-- source-code implementation
-- business logic
-- configuration values
-- connection strings
-- secrets
-- application data
-- application-specific settings
-- unrelated dependencies
+Preserve valid CLI-generated files except explicitly excluded files such as the `.http` file.
 
 ---
 
-# Similar Project File Structure
+# Core
 
-When a similar project contains:
+Apps/Core/<ProjectName>/
 
-<Folder>/<File>
-
-reproduce:
-
-- file name
-- location
-- extension
-
-Do not reproduce implementation.
-
-If the .NET CLI creates a corresponding file, retain the CLI-generated content.
-
-If the file is a structural file created specifically by the generator, create minimal valid skeleton content.
+<ProjectName>.API/
+<ProjectName>.Domain/
+<ProjectName>.Repository/
+<ProjectName>.Services/
 
 ---
 
-# Target Framework
+# Core Domain
 
-All newly generated projects target:
+<ProjectName>.Domain/
+
+Models/
+    <ProjectName>Model.cs
+
+Contracts/
+    Repository/
+        I<ProjectName>Repository.cs
+
+    Services/
+        I<ProjectName>Service.cs
+
+Constants/
+    <ProjectName>Constants.cs
+
+Options/
+    <ProjectName>Options.cs
+
+GlobalUsings.cs
+
+<ProjectName>.Domain.csproj
+
+Domain and Common are different project types.
+
+---
+
+# Core Repository
+
+<ProjectName>.Repository/
+
+<ProjectName>Repository.cs
+RegisterServices.cs
+<ProjectName>.Repository.csproj
+
+---
+
+# Core Services
+
+<ProjectName>.Services/
+
+<ProjectName>Service.cs
+RegisterServices.cs
+<ProjectName>.Services.csproj
+
+---
+
+# Infrastructure
+
+Infrastructure/
+
+Infrastructure does not have one universal structure.
+
+Known structures are defined below.
+
+---
+
+# Infrastructure Standard Service Module
+
+Infrastructure/<ModuleName>/
+
+<ModuleName>.Common/
+<ModuleName>.Repository/
+<ModuleName>.Services/
+
+---
+
+# Infrastructure Service Host Module
+
+Infrastructure/<ModuleName>/
+
+<ModuleName>.Common/
+<ModuleName>.Repository/
+<ModuleName>.Services/
+<ModuleName>.ServiceHost/
+
+---
+
+# Infrastructure API Client
+
+Infrastructure/<ModuleName>/
+
+<ModuleName>.API.Client/
+
+Additional API clients may be created when explicitly requested.
+
+---
+
+# Infrastructure Message Processing
+
+Infrastructure/<ModuleName>/
+
+<ModuleName>.MessageProcessing/
+<ModuleName>.Messaging/
+<ModuleName>.Common/
+<ModuleName>.Repository/
+<ModuleName>.Services/
+
+Only use this structure when the user explicitly requests a MessageEngine-style module or a structural reference establishes it.
+
+---
+
+# Infrastructure Notification SDK
+
+Infrastructure/<ModuleName>/
+
+<ModuleName>.SDK/
+<ModuleName>.SDK.Common/
+
+---
+
+# Infrastructure Transport
+
+Infrastructure/<ModuleName>/
+
+<ModuleName>.FileShare/
+<ModuleName>.Repository/
+<ModuleName>.Common/
+<ModuleName>.Services/
+
+Only create components explicitly required by the selected structure.
+
+---
+
+# Infrastructure Watcher
+
+Infrastructure/<ModuleName>/
+
+<ModuleName>.Common/
+<ModuleName>.Repository/
+<ModuleName>.ServiceHost/
+<ModuleName>.Services/
+
+---
+
+# Standalone Infrastructure
+
+A standalone Infrastructure project is one project.
+
+Do not automatically create additional projects.
+
+Examples:
+
+Infrastructure/<ProjectName>/
+
+or another explicitly requested Infrastructure location.
+
+The project structure must come from:
+
+- selected archetype
+- explicit user request
+- similar-project reference
+
+---
+
+# Message Processing Logic
+
+A new message-processing logic project:
+
+<ProjectName>.MessageProcessing/
+
+Handlers/
+Strategies/
+Services/
+Models/
+Options/
+
+ModuleLoader.cs
+
+<ProjectName>.MessageProcessing.csproj
+
+This is a library.
+
+It is not the host.
+
+---
+
+# Worker / Processor Host
+
+A new Worker host:
+
+<ProjectName>.ProcessorHost/
+
+Program.cs
+appsettings.json
+build-info.json
+
+<ProjectName>.ProcessorHost.csproj
+
+The actual Worker template may generate additional files.
+
+Do not remove valid generated files unless the selected NYBOSS structure explicitly excludes them.
+
+---
+
+# Workflow EXE Host
+
+A workflow executable:
+
+<ProjectName>.Host/
+
+Program.cs
+appsettings.json
+appsettings.Local.json
+build-info.json
+
+<ProjectName>.Host.csproj
+
+The project uses:
+
+Microsoft.NET.Sdk
+
+with:
+
+<OutputType>Exe</OutputType>
+
+It is run-to-completion.
+
+---
+
+# Unit Test
+
+Tests/UnitTests/<Area>/<ProjectName>/
+
+<ProjectName>.UnitTest.csproj
+
+GlobalUsings.cs
+
+Controllers/
+Services/
+Repositories/
+Models/
+Validators/
+MessageProcessing/
+
+Only create test folders that are required by the projects/features under test.
+
+---
+
+# Naming
+
+New projects:
+
+<ProjectName>.<Component>
+
+Examples:
+
+<ProjectName>.API
+<ProjectName>.Common
+<ProjectName>.Domain
+<ProjectName>.Repository
+<ProjectName>.Services
+<ProjectName>.MessageProcessing
+<ProjectName>.ProcessorHost
+<ProjectName>.Host
+<ProjectName>.UnitTest
+<ProjectName>.ServiceHost
+<ProjectName>.API.Client
+<ProjectName>.SDK
+
+Never introduce:
+
+BNPP.NYBOSS.<ProjectName>
+
+for a new project.
+
+---
+
+# Structural Files
+
+Structural files must be minimal valid skeletons.
+
+Do not copy implementation from reference projects.
+
+Examples:
+
+<ProjectName>Constants.cs
+<ProjectName>Model.cs
+<ProjectName>Options.cs
+I<ProjectName>Repository.cs
+I<ProjectName>Service.cs
+<ProjectName>Repository.cs
+<ProjectName>Service.cs
+RegisterServices.cs
+ModuleLoader.cs
+
+---
+
+# CLI Generated Files
+
+Keep generated content from:
+
+dotnet new
+
+including:
+
+Program.cs
+.csproj
+launchSettings.json
+appsettings.json
+Worker.cs
+other valid template-generated files
+
+Modify only where required by the selected NYBOSS architecture.
+
+---
+
+# API Cleanup
+
+Remove:
+
+<ProjectName>.API.http
+
+unless explicitly requested.
+
+---
+
+# Framework
+
+All new projects target:
 
 net8.0
-
-This applies to:
-
-- Business
-- Core
-- Infrastructure
-
-unless the user explicitly requests another framework.
-
----
-
-# Default Business References
-
-Default Business:
-
-<ProjectName>.API
-    -> <ProjectName>.Services
-
-<ProjectName>.Services
-    -> <ProjectName>.Common
-    -> <ProjectName>.Repository
-
-<ProjectName>.Repository
-    -> <ProjectName>.Common
-
-Only add these references when the corresponding projects exist.
-
----
-
-# Default Core References
-
-Default Core:
-
-<ProjectName>.API
-    -> <ProjectName>.Services
-
-<ProjectName>.Services
-    -> <ProjectName>.Domain
-    -> <ProjectName>.Repository
-
-<ProjectName>.Repository
-    -> <ProjectName>.Domain
-
-Only add these references when the corresponding projects exist.
-
----
-
-# Infrastructure References
-
-Infrastructure project references are intentionally not defined in this phase.
-
-Do not:
-
-- infer Infrastructure references
-- copy Infrastructure references
-- add Infrastructure project references automatically
-
-Infrastructure reference analysis will be handled in a later phase.
 
 ---
 
 # Solution
 
-The existing solution is:
+All projects belong to:
 
 BNPP.NYBOSS.NextGen.Server.sln
 
-All newly generated projects belong to this solution.
-
-Do not create a separate solution.
-
-Use:
-
-dotnet sln BNPP.NYBOSS.NextGen.Server.sln add <project-path>
-
----
-
-# API Template Cleanup
-
-The API template-generated:
-
-<ProjectName>.API.http
-
-file is not part of the default NYBOSS structure.
-
-Remove it after project creation unless explicitly requested.
-
----
-
-# Structure-Only Boundary
-
-This phase creates:
-
-- projects
-- modules
-- folders
-- structural files
-- `.csproj` files
-- project configuration
-- Business/Core project references
-- solution entries
-
-This phase does not implement:
-
-- business functionality
-- application functionality
-- controller logic
-- service logic
-- repository logic
-- domain logic
-- Infrastructure logic
-
-Infrastructure project references are deferred to a later phase.
-
-CLI-generated content must remain intact.
+Do not create a second solution.
